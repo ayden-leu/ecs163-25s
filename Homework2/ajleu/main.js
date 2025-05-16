@@ -21,11 +21,11 @@ const barGraphTextLabelX = "Age",
     barGraphTextLabelYOffset = {"x": -30, "y": -barGraphHeight/2},
     barGraphTextSizeLabel = 20,
     barGraphTextSizeTicks = 10,
-    barGraphLegendIconSize = {"x": 15, "y": 15},
+    barGraphLegendIconSize = {"x": 20, "y": 20},
     barGraphLegendOffset = {"x": -4 + -barGraphLegendIconSize.x + barGraphWidth, "y": 0},
     barGraphLegendIconSeparation = 5,
-    barGraphLegendTextOffset = {"x": -5 + -barGraphLegendIconSize.x, "y": 12},
-    barGraphLegendTextSize = 12,
+    barGraphLegendTextOffset = {"x": -5 + -barGraphLegendIconSize.x, "y": 15},
+    barGraphLegendTextSize = 15,
     barGraphLegendTextAnchor = "end",
     barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
     barGraphTitleSize = "1.5em"
@@ -57,15 +57,21 @@ const parallelTextLabelsXSize = 20,
     parallelTitleSize = "1.5em"
 ;
 
-let donutLeft = -100 + parallelWidth, donutTop = -90 + barGraphHeight;
-let donutMargin = {top: 200, right: 0, bottom: 0, left: 0},
-    donutWidth = width - parallelWidth - donutMargin.left - donutMargin.right,
-    donutHeight = parallelHeight - donutMargin.top - donutMargin.bottom;
-
-const donutRadius = 230;
-const donutTextTitleSize = "1.5em";
-
-const donutLegendTextSize = 12;
+const donutWidth = width/2,
+    donutHeight = donutWidth,
+    donutOffset = {"x": width*3/4, "y": height/2}
+;
+const donutRadius = 230,
+    donutTextSize = 23,
+    donutLegendOffset = {"x": -15 + -donutRadius, "y": -15 + -donutRadius},
+    donutLegendIconSize = {"x": 20, "y": 20},
+    donutLegendIconSeparation = 6,
+    donutLegendTextSize = 15,
+    donutLegendTextOffset = {"x": 25, "y": 12},
+    donutLegendTextAnchor = "start",
+    donutTitleOffset = {"x": 0, "y": 0},
+    donutTitleSize = "1.5em"
+;
 
 const tooltipOffset = {"x": 1, "y": -130},
     tooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0},
@@ -771,8 +777,8 @@ d3.csv(dataset).then(rawData =>{
     // draw donut
     const donut = svg.append("g")
         .attr("transform", `translate(
-            ${donutLeft + donutMargin.left + donutWidth / 2},
-            ${donutTop + donutMargin.top + donutHeight / 2}
+            ${donutOffset.x},
+            ${donutOffset.y}
         )`)
         .attr("style", "outline: 1px solid black") 
     ;
@@ -780,9 +786,7 @@ d3.csv(dataset).then(rawData =>{
         .data(piedData)
         .join("path")
         .attr("d", arc)
-        .attr("fill", entry => getEffectColor(entry.data[0]))
-        .append("title")
-            .text("hi")
+        .attr("fill", entry => getEffectColor(entry.data[0]))  // [0] = category name, [1] = value
     ;
 
     // add count labels
@@ -794,52 +798,55 @@ d3.csv(dataset).then(rawData =>{
         .join("text")
         .attr("transform", entry => `translate(${arc.centroid(entry)})`)
         .call(text => text.append("tspan")
-            .style("color", "white")
-            .style("pointer-events", "none")
             .text(entry => entry.data[1]))
+            .style("pointer-events", "none")
+            .style("fill", "black")
+            .style("font-size", `${donutTextSize}px`)
     ;
     
     // title
     donut.append("text")
-        .attr("transform", "translate(0, -25)")
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y - 25})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTextTitleSize)
+        .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Music's Effects");
     donut.append("text")
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTextTitleSize)
+        .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("on");
     donut.append("text")
-        .attr("transform", "translate(0, 25)")
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTextTitleSize)
+        .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Subjects' Mental Health");
     
     // legend
     const donutLegend = donut.append("g")
         .attr("transform", `translate(
-            ${-donutWidth / 4 - 30},
-            ${-donutHeight - 30}
+            ${donutLegendOffset.x},
+            ${donutLegendOffset.y}
         )`
     );
     donutData.forEach((entry, index) => {
         const label = entry[0];
 
         const donutLegendRow = donutLegend.append("g")
-            .attr("transform", `translate(0, ${index * 20})`);
+            .attr("transform", `translate(0, ${index * (donutLegendIconSize.y + donutLegendIconSeparation)})`);
 
         donutLegendRow.append("rect")
-            .attr("width", 15)
-            .attr("height", 15)
+            .attr("width", donutLegendIconSize.x)
+            .attr("height", donutLegendIconSize.y)
             .attr("fill", getEffectColor(label));
 
         donutLegendRow.append("text")
-            .attr("x", 20)
-            .attr("y", 12)
+            .attr("x", donutLegendTextOffset.x)
+            .attr("y", donutLegendTextOffset.y)
             .attr("font-size", `${donutLegendTextSize}px`)
+            .attr("text-anchor", donutLegendTextAnchor)
             .text(label);
     });
 

@@ -30,6 +30,11 @@ const barGraphTextLabelX = "Age",
     barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
     barGraphTitleSize = "1.5em"
 ;
+const barTooltipOffset = {"x": 1, "y": -131},
+    barTooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0},
+    barTooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5},
+    barTooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5}
+;
 
 const parallelOffset = {"x": -44, "y": 120 + barGraphOffset.y + barGraphHeight},
     parallelWidth = Math.max(
@@ -46,7 +51,6 @@ const parallelTextLabelsXSize = 20,
     parallelLineOpacityDefault = 0.5,
     parallelLineOpacityFocused = 1,
     parallelLineOpacityUnfocused = 0.01,
-    parallelLineTransitionTime = 100,
     parallelLegendOffset = {"x": 180, "y": -9},
     parallelLegendIconSize = {"x": 20, "y": 20},
     parallelLegendIconSeparation = 6,
@@ -63,6 +67,9 @@ const donutWidth = width/2,
 ;
 const donutRadius = 230,
     donutTextSize = 23,
+    donutSliceOpacityDefault = 1,
+    donutSliceOpacityFocused = 1,
+    donutSliceOpacityUnfocused = 0.3,
     donutLegendOffset = {"x": -15 + -donutRadius, "y": -15 + -donutRadius},
     donutLegendIconSize = {"x": 20, "y": 20},
     donutLegendIconSeparation = 6,
@@ -72,12 +79,11 @@ const donutRadius = 230,
     donutTitleOffset = {"x": 0, "y": 0},
     donutTitleSize = "1.5em"
 ;
-
-const tooltipOffset = {"x": 1, "y": -130},
-    tooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0},
-    tooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5},
-    tooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5}
+const donutTooltipOffset = {"x": 1, "y": -100},
+    donutTooltipMargin_p = {top: 0, right: 0, bottom: 0, left: 0, all: 5}
 ;
+
+const transitionTime = 100;
 
 function getServiceColor(platform){
     const serviceColor = {
@@ -394,7 +400,6 @@ d3.csv(dataset).then(rawData =>{
         .attr("width", barGraphWidth) //+ barGraphMargin.left + barGraphMargin.right)
         .attr("height", barGraphHeight) //+ barGraphMargin.top + barGraphMargin.bottom)
         .attr("transform", `translate(${barGraphOffset.x}, ${barGraphOffset.y})`)
-        .attr("style", "outline: 1px solid black") 
     ;
 
     // bar stack
@@ -486,22 +491,22 @@ d3.csv(dataset).then(rawData =>{
                 `)
                 .selectAll("ul")
                     .style("padding-inline-start", "13px")
-                    .style("margin", `${tooltipMargin_ul.all}px`)
+                    .style("margin", `${barTooltipMargin_ul.all}px`)
             ;
             tooltip.select("h3")
-                .style("margin", `${tooltipMargin_h3.all}px`)
+                .style("margin", `${barTooltipMargin_h3.all}px`)
             ;
             tooltip.selectAll("li").select("p")
-                .style("margin", `${tooltipMargin_p.all}px`)
+                .style("margin", `${barTooltipMargin_p.all}px`)
             ;
             tooltip.select("li:last-child").select("p")
-                .style("margin-bottom", `${tooltipMargin_p.bottom}px`)
+                .style("margin-bottom", `${barTooltipMargin_p.bottom}px`)
             ;
         })
         .on("mousemove", function(){
             tooltip
-                .style('left', (d3.event.pageX + tooltipOffset.x) + 'px')
-                .style('top', (d3.event.pageY + tooltipOffset.y) + 'px');
+                .style('left', (d3.event.pageX + barTooltipOffset.x) + 'px')
+                .style('top', (d3.event.pageY + barTooltipOffset.y) + 'px');
         })
         .on('mouseout', function(){
             tooltip
@@ -569,7 +574,6 @@ d3.csv(dataset).then(rawData =>{
         .attr("width", parallelWidth)
         .attr("height", parallelHeight)
         .attr("transform", `translate(${parallelOffset.x}, ${parallelOffset.y})`)
-        .attr("style", "outline: 1px solid black")
     ;
 
     // x scale
@@ -616,19 +620,19 @@ d3.csv(dataset).then(rawData =>{
         .on("mouseover", function(entry) {
             d3.selectAll(".line")
                 .transition()
-                .duration(parallelLineTransitionTime)
+                .duration(transitionTime)
                 .style("opacity", parallelLineOpacityUnfocused);
             
             d3.selectAll(".line." + numToGenre(entry.fav_genre))
                 .transition()
-                .duration(parallelLineTransitionTime)
+                .duration(transitionTime)
                 .style("opacity", parallelLineOpacityFocused)
                 .style("stroke-width", parallelLineWidthFocused);
         })
         .on('mouseout', function(){
             d3.selectAll(".line")
                 .transition()
-                .duration(parallelLineTransitionTime)
+                .duration(transitionTime)
                 .style("opacity", parallelLineOpacityDefault)
                 .style("stroke-width", parallelLineWidthDefault);
         })
@@ -698,19 +702,19 @@ d3.csv(dataset).then(rawData =>{
             .on("mouseover", function() {
                 d3.selectAll(".line")
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityUnfocused);
                 
                 d3.selectAll(".line." + entry)
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityFocused)
                     .style("stroke-width", parallelLineWidthFocused);
             })
             .on('mouseout', function(){
                 d3.selectAll(".line")
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityDefault)
                     .style("stroke-width", parallelLineWidthDefault);
             })
@@ -726,19 +730,19 @@ d3.csv(dataset).then(rawData =>{
             .on("mouseover", function() {
                 d3.selectAll(".line")
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityUnfocused);
                 
                 d3.selectAll(".line." + entry)
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityFocused)
                     .style("stroke-width", parallelLineWidthFocused);
             })
             .on('mouseout', function(){
                 d3.selectAll(".line")
                     .transition()
-                    .duration(parallelLineTransitionTime)
+                    .duration(transitionTime)
                     .style("opacity", parallelLineOpacityDefault)
                     .style("stroke-width", parallelLineWidthDefault);
             })
@@ -765,6 +769,13 @@ d3.csv(dataset).then(rawData =>{
 
     console.log("donutData", donutData);
     
+    const statusToSentence = {
+        "Improve": "said music has <strong>improved</strong> their mental health.",
+        "No effect": "said music has <strong>not affected</strong> their mental health.",
+        "Worsen": "said music has <strong>worsened</strong> their mental health.",
+        "N/A": "didn't submit an answer."
+    };
+
     // define donut
     const pie = d3.pie()
         .value(entry => entry[1]);  // [[key, value]. [key, value], ...]
@@ -780,13 +791,55 @@ d3.csv(dataset).then(rawData =>{
             ${donutOffset.x},
             ${donutOffset.y}
         )`)
-        .attr("style", "outline: 1px solid black") 
     ;
-    donut.selectAll("path")
+    donut.selectAll("donut")
         .data(piedData)
         .join("path")
         .attr("d", arc)
+        .attr("class", "donutSlice")
+        .attr("opacity", donutSliceOpacityDefault)
         .attr("fill", entry => getEffectColor(entry.data[0]))  // [0] = category name, [1] = value
+        .on("mouseover", function(entry) {
+            const amount = entry.data[1];
+            const status = entry.data[0];
+
+            d3.selectAll(".donutSlice")
+                .transition()
+                .duration(transitionTime)
+                .style("opacity", donutSliceOpacityUnfocused)
+            ;
+
+            d3.select(this)
+                .transition()
+                .duration(transitionTime)
+                .style("opacity", donutSliceOpacityFocused)
+            ;
+
+            tooltip
+                .style("padding", "10px")
+                .style("display", "block")
+                .html(`
+                    <p><strong>${amount}</strong> people ${statusToSentence[status]}</p>
+                `)
+                .selectAll("p")
+                    .style("margin", `${donutTooltipMargin_p.all}px`)
+            ;
+        })
+        .on("mousemove", function(){
+            tooltip
+                .style('left', (d3.event.pageX + donutTooltipOffset.x) + 'px')
+                .style('top', (d3.event.pageY + donutTooltipOffset.y) + 'px');
+        })
+        .on('mouseout', function(){
+            d3.selectAll(".donutSlice")
+                .transition()
+                .duration(transitionTime)
+                .style("opacity", donutSliceOpacityDefault)
+            ;
+
+            tooltip
+                .style('display', 'none');
+        })
     ;
 
     // add count labels

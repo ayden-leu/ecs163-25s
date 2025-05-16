@@ -100,13 +100,13 @@ const transitionTime = 100;
 
 function getServiceColor(platform){
     const serviceColor = {
-        "Spotify": "lightgreen",
-        "Pandora": "lightblue",
+        "Spotify": "olivedrab",
+        "Pandora": "deepskyblue",
         "YouTube Music": "salmon",
-        "Apple Music": "lightgray",
-        "Other": "purple"
+        "Apple Music": "gainsboro",
+        "Other": "gray"
     };
-    return serviceColor[platform] || "black";
+    return serviceColor[platform] || "lightslategray";
 }
 function getMusicGenreColor(genre){
     if(typeof genre === "number") genre = numToGenre(genre);
@@ -114,21 +114,20 @@ function getMusicGenreColor(genre){
     const musicGenreColor = {
         "Classical": "gray",
         "Country": "orange",
-        "EDM": "purple",
-        "Folk": "firebrick",
+        "EDM": "blue",
+        "Folk": "brown",
         "Gospel": "gold",
-        "Hip_hop": "darkblue",
-        "Jazz": "blue",
+        "Hip_hop": "mediumvioletred",
+        "Jazz": "indigo",
         "K_pop": "green",
-        "Latin": "darkgreen",
-        "Lofi": "steelblue",
-        "Metal": "black",
+        "Latin": "red",
+        "Lofi": "hotpink",
+        "Metal": "silver",
         "Pop": "magenta",
-        "R_and_B": "lightblue",
+        "R_and_B": "indianred",
         "Rap": "cyan",
-        "Rock": "lightgray",
-        "Video_game_music": "orange",
-        "": "white"
+        "Rock": "slategray",
+        "Video_game_music": "purple"
     };
     return musicGenreColor[genre] || "white";
 }

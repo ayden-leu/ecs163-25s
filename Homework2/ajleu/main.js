@@ -96,7 +96,7 @@ const transitionTime = 100;
 
 function getServiceColor(platform){
     const serviceColor = {
-        "Spotify": "olivedrab",
+        "Spotify": "lightgreen",
         "Pandora": "deepskyblue",
         "YouTube Music": "salmon",
         "Apple Music": "gainsboro",

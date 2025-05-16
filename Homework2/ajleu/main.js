@@ -7,14 +7,8 @@ const datasetHoursMax = 24;
 const debugStyle = "" //"outline: 1px solid black"
 ;
 const barGraphOffset = {"x": 10, "y": 10},
-    barGraphWidth = Math.max(
-        // 1000,
-        width/2
-    ),
-    barGraphHeight = Math.max(
-        // 300,
-        height/3
-    )
+    barGraphWidth = width/2,
+    barGraphHeight = height/3
 ;
 const barGraphTextLabelX = "Age",
     barGraphTextLabelY = "Average Hours Per Day",
@@ -28,6 +22,7 @@ const barGraphTextLabelX = "Age",
     barGraphLegendTextOffset = {"x": 25 + -barGraphLegendIconSize.x, "y": 15},
     barGraphLegendTextSize = 15,
     barGraphLegendTextAnchor = "start",
+    barGraphTitle = "Hours Listened on Service by Various Ages",
     barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
     barGraphTitleSize = "1.5em"
 ;
@@ -51,7 +46,7 @@ const parallelOffset = {"x": 5, "y": 50 + barGraphTotalTranslation.y + barGraphH
 ;
 const parallelTextLabelsXSize = 20,
     parallelTextLabelsYSize = (width > 1280)? 0 : 15,
-    parallelTextLabelsXOffset = {"x": 0, "y": -10},
+    parallelTextLabelsXOffset = {"x": 0, "y": "-1em"},
     parallelLineWidthDefault = 1,
     parallelLineWidthFocused = 2,
     parallelLineOpacityDefault = 0.5,
@@ -65,6 +60,7 @@ const parallelTextLabelsXSize = 20,
     parallelLegendTextSize = 15,
     parallelLegendTextOffset = {"x": -5, "y": 13},
     parallelLegendTextAnchor = "end",
+    parallelTitle = "Relation of Genre to Self-Reported Aspects",
     parallelTitleOffset = {"x": -40 + parallelWidth/2, "y": -45},
     parallelTitleSize = "1.5em"
 ;
@@ -141,47 +137,6 @@ function getEffectColor(effect){
     return effectColor[effect] || "black";
 }
 
-// function musicEffectToNum(effect){
-//     const effectToNum = {
-//         "Improve": 2,
-//         "No effect": 1,
-//         "Worsen": 0
-//     };
-//     return effectToNum[effect] || 0;
-// }
-// function numToMusicEffect(effect){
-//     const numToEffect = {
-//         2: "Improve",
-//         1: "No effect",
-//         0: "Worsen"
-//     };
-//     return numToEffect[effect] || "huh";
-// }
-
-// function frequencyToNum(freq){
-//     const freqToNum = {
-//         "Very frequently": 3,
-//         "Sometimes": 2,
-//         "Rarely": 1,
-//         "Never": 0
-//     };
-//     return freqToNum[freq] || -1;
-// }
-// function numToFrequency(freq){
-//     const numToFreq = {
-//         3: "Very frequently",
-//         2: "Sometimes",
-//         1: "Rarely",
-//         0: "Never"
-//     };
-//     return numToFreq[freq] || "huh";
-// }
-
-// const genres = [
-//     "Classical", "Country", "EDM", "Folk", "Gospel", "Hip_hop",
-//     "Jazz", "K_pop", "Latin", "Lofi", "Metal", "Pop", "R_and_B",
-//     "Rap", "Rock", "Video_game_music"
-// ];
 function genreToNum(genre){
     const genreToNum = {
         "Classical": 1,
@@ -351,13 +306,12 @@ d3.csv(dataset).then(rawData =>{
         const hours = entry.hours_per_day;
         
         // get totals for each service for each age
-        if(!totalHoursEntriesPerAge[age]){
+        if(!totalHoursEntriesPerAge[age]){  // initialize entry
             totalHoursEntriesPerAge[age] = {"totalHours": 0, "count": 0, "services": {}};
         }
-        if(!totalHoursEntriesPerAge[age].services[service]){
+        if(!totalHoursEntriesPerAge[age].services[service]){  // initialize entry
             totalHoursEntriesPerAge[age].services[service] = 0;
         }
-        // totalHoursEntriesPerAge[age][service].totalHours += hours;
         totalHoursEntriesPerAge[age].services[service]++;
         totalHoursEntriesPerAge[age].totalHours += hours;
         totalHoursEntriesPerAge[age].count++;
@@ -373,7 +327,7 @@ d3.csv(dataset).then(rawData =>{
         const count = totalHoursEntriesPerAge[ageEntry].count;
         newEntry.avgHours = total / count;
         
-        services.forEach(serviceEntry => {
+        services.forEach(serviceEntry => {  // gets service count for this entry
             const serviceCount = totalHoursEntriesPerAge[ageEntry].services[serviceEntry] || 0;
             newEntry.services[serviceEntry] = serviceCount;
         });
@@ -389,7 +343,7 @@ d3.csv(dataset).then(rawData =>{
         });
         
         Object.keys(entry.services).forEach(service => {
-            // scale percentage by average hours for age
+            // scale percentage by average hours for this age group
             entry.services[service] = entry.services[service] / total * entry.avgHours;
         }); 
     });
@@ -400,7 +354,7 @@ d3.csv(dataset).then(rawData =>{
         const newEntry = {"age": entry.age, "totalAvg": entry.avgHours};
 
         services.forEach(service => {
-            newEntry[service] = entry.services[service] || 0;  // || 0 is for if there is no value for a service
+            newEntry[service] = entry.services[service] || 0;  // || 0 is in case there is no value for this service
         });
 
         return newEntry;
@@ -416,8 +370,8 @@ d3.csv(dataset).then(rawData =>{
     ;
 
     // bar stack
-    const stackedBars = d3.stack().keys(services);
-    const stackedData = stackedBars(flattenedData);
+    const stackedBars = d3.stack().keys(services);   // stacks the data
+    const stackedData = stackedBars(flattenedData);  // based on services
     console.log("stackedData", stackedData);
 
     // x range
@@ -445,7 +399,6 @@ d3.csv(dataset).then(rawData =>{
         .nice();
 
     // y axis visual
-    console.log("stackedData", stackedData);
     const barGraphTicksY = d3.axisLeft(barGraphY).ticks(stackedDataMaxY/2);
     barGraph.append("g")
         .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphContentShift.y})`)
@@ -485,7 +438,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("y", entry => barGraphY(entry[1]))                             // so the base is actually the top
         .attr("height", entry => barGraphY(entry[0]) - barGraphY(entry[1]))  // of the bar
         .attr("width", barGraphX.bandwidth())
-        .on("mouseover", function(entry) {
+        .on("mouseover", function(entry){  // make tooltip appear
             const service = d3.select(this.parentNode).datum().key;
             const average = entry.data.totalAvg;
             const serviceAvg = entry.data[service];
@@ -520,12 +473,12 @@ d3.csv(dataset).then(rawData =>{
                 .style("margin-bottom", `${barTooltipMargin_p.bottom}px`)
             ;
         })
-        .on("mousemove", function(){
+        .on("mousemove", function(){  // update tooltip position
             tooltip
                 .style('left', (d3.event.pageX + barTooltipOffset.x) + 'px')
                 .style('top', (d3.event.pageY + barTooltipOffset.y) + 'px');
         })
-        .on('mouseout', function(){
+        .on('mouseout', function(){  // make tooltip disappear
             tooltip
                 .style('display', 'none');
         })
@@ -539,7 +492,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("font-size", barGraphTitleSize)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
-        .text("Hours Listened on Service by Various Ages");
+        .text(barGraphTitle);
     
     // legend
     const barGraphLegend = barGraph.append("g")
@@ -573,7 +526,7 @@ d3.csv(dataset).then(rawData =>{
     //      service
     //      frequency_genre 
     ///////////////////////////////////////////////////////////////////////////
-    const parallelData = processedData.map(entry => {
+    const parallelData = processedData.map(entry => {  // only get data we need
         return {
             "fav_genre": genreToNum(entry.fav_genre),
             "bpm": entry.bpm,
@@ -587,6 +540,7 @@ d3.csv(dataset).then(rawData =>{
         "fav_genre", "anxiety", "depression", "insomnia", "ocd"
     ];
 
+    // parallel coordinates container
     const parallel = svg.append("g")
         .attr("width", parallelWidth)
         .attr("height", parallelHeight)
@@ -603,19 +557,19 @@ d3.csv(dataset).then(rawData =>{
         
     // y scale
     const parallelY = {};
-    parallelCategories.forEach(genre => {  // anxiety, depresssion, insomnia, and ocd are from 0-10
+    parallelCategories.forEach(genre => {  
         parallelY[genre] = d3.scaleLinear()
-            .domain([0, 10])
+            .domain([0, 10])  // anxiety, depresssion, insomnia, and ocd are from 0-10
             .range([parallelHeight, 0]);
     });
     parallelY["fav_genre"] = d3.scaleLinear()
-        .domain([
+        .domain([  // genres are on ID form so we can use that for the numerical range
             d3.max(parallelData, entry => entry.fav_genre),
             d3.min(parallelData, entry => entry.fav_genre)
         ])
         .range([parallelHeight, 0]);
     
-    // line function
+    // line definition
     function path(d) {
         return d3.line()(
             parallelCategories.map(genre => [
@@ -636,7 +590,7 @@ d3.csv(dataset).then(rawData =>{
         .style("stroke", entry => getMusicGenreColor(entry.fav_genre))
         .style("opacity", parallelLineOpacityDefault)
         .style("cursor", "pointer")
-        .on("mouseover", function(entry) {
+        .on("mouseover", function(entry){  // emphasize line below cursor
             d3.selectAll(".line")
                 .transition()
                 .duration(transitionTime)
@@ -648,7 +602,7 @@ d3.csv(dataset).then(rawData =>{
                 .style("opacity", parallelLineOpacityFocused)
                 .style("stroke-width", parallelLineWidthFocused);
         })
-        .on('mouseout', function(){
+        .on('mouseout', function(){  // make lines normal when cursor leaves
             d3.selectAll(".line")
                 .transition()
                 .duration(transitionTime)
@@ -665,16 +619,14 @@ d3.csv(dataset).then(rawData =>{
         .each(function(entry, index) {
             const axis = d3.select(this);
             
-            if(index === 0){
+            if(index === 0){  // the first tick set is for the genres, so it displays text instead of numbers
                 axis.call(d3.axisLeft(parallelY[entry])
                     .ticks(genres.length)
                     .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
                 );
 
-                console.log("entry", entry);
-
                 axis.selectAll(".tick text")
-                    .on("mouseover", function(tickName) {
+                    .on("mouseover", function(tickName){  // emphasize the lines belonging to the genre below the cursor
                         d3.selectAll(".line")
                             .transition()
                             .duration(transitionTime)
@@ -686,7 +638,7 @@ d3.csv(dataset).then(rawData =>{
                             .style("opacity", parallelLineOpacityFocused)
                             .style("stroke-width", parallelLineWidthFocused);
                     })
-                    .on('mouseout', function(){
+                    .on('mouseout', function(){  // make lines normal when cursor leaves
                         d3.selectAll(".line")
                             .transition()
                             .duration(transitionTime)
@@ -695,7 +647,7 @@ d3.csv(dataset).then(rawData =>{
                     })
                 ;
             }
-            else{
+            else{  // the rest are numbers so no other logic needed
                 axis.call(d3.axisLeft(parallelY[entry])
                     .ticks(10)  // scores are from 0-10
                 );
@@ -703,7 +655,7 @@ d3.csv(dataset).then(rawData =>{
 
             axis.attr("font-size", `${parallelTextLabelsYSize}px`);
         })
-        .append("text")
+        .append("text")  // the names of the categories for each vertical axis thing
             .style("text-anchor", "middle")
             .attr("x", 5)
             .attr("y", 5)
@@ -711,8 +663,7 @@ d3.csv(dataset).then(rawData =>{
             .style("fill", "black")
             .style("font-size", `${parallelTextLabelsXSize}px`)
             .attr("x", parallelTextLabelsXOffset.x)
-            .attr("y", parallelTextLabelsXOffset.y)
-            .attr("dy", "-0.5em");
+            .attr("y", parallelTextLabelsXOffset.y);
     
     // title
     parallel.append("text")
@@ -722,7 +673,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("font-size", parallelTitleSize)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
-        .text("Relation of Genre to Self-Reported Aspects");
+        .text(parallelTitle);
     
     // legend
     const parallelLegend = parallel.append("g")
@@ -734,15 +685,17 @@ d3.csv(dataset).then(rawData =>{
     genres.forEach((entry, index) => {
         const label = entry;
 
+        // legend row container
         const parallelLegendRow = parallelLegend.append("g")
             .attr("transform", `translate(0, ${index * (parallelLegendIconSize.y + parallelLegendIconSeparation)})`);
 
+        // legend "icon" (colored square)
         parallelLegendRow.append("rect")
             .attr("width", parallelLegendIconSize.x)
             .attr("height", parallelLegendIconSize.y)
             .attr("fill", getMusicGenreColor(label))
             .style("cursor", "pointer")
-            .on("mouseover", function() {
+            .on("mouseover", function(){  // emphasize lines of the same color as the square below cursor
                 d3.selectAll(".line")
                     .transition()
                     .duration(transitionTime)
@@ -754,7 +707,7 @@ d3.csv(dataset).then(rawData =>{
                     .style("opacity", parallelLineOpacityFocused)
                     .style("stroke-width", parallelLineWidthFocused);
             })
-            .on('mouseout', function(){
+            .on('mouseout', function(){  // make lines normal when cursor leaves
                 d3.selectAll(".line")
                     .transition()
                     .duration(transitionTime)
@@ -762,7 +715,8 @@ d3.csv(dataset).then(rawData =>{
                     .style("stroke-width", parallelLineWidthDefault);
             })
         ;
-
+        
+        // legend text
         parallelLegendRow.append("text")
             .attr("x", parallelLegendTextOffset.x)
             .attr("y", parallelLegendTextOffset.y)
@@ -770,7 +724,7 @@ d3.csv(dataset).then(rawData =>{
             .attr("text-anchor", parallelLegendTextAnchor)
             .text(label.replaceAll("_", " "))
             .style("cursor", "pointer")
-            .on("mouseover", function() {
+            .on("mouseover", function(){  // emphasize lines belonging to the same genre as the text below cursor
                 d3.selectAll(".line")
                     .transition()
                     .duration(transitionTime)
@@ -782,7 +736,7 @@ d3.csv(dataset).then(rawData =>{
                     .style("opacity", parallelLineOpacityFocused)
                     .style("stroke-width", parallelLineWidthFocused);
             })
-            .on('mouseout', function(){
+            .on('mouseout', function(){ // make lines normal when cursor leaves
                 d3.selectAll(".line")
                     .transition()
                     .duration(transitionTime)
@@ -812,6 +766,7 @@ d3.csv(dataset).then(rawData =>{
 
     console.log("donutData", donutData);
     
+    // tooltip messages
     const statusToSentence = {
         "Improve": "said music has <strong>improved</strong> their mental health.",
         "No effect": "said music has <strong>not affected</strong> their mental health.",
@@ -828,7 +783,7 @@ d3.csv(dataset).then(rawData =>{
         .outerRadius(donutRadius)
     ;
 
-    // draw donut
+    // donut container
     const donut = svg.append("g")
         .attr("transform", `translate(
             ${donutOffset.x},
@@ -836,6 +791,8 @@ d3.csv(dataset).then(rawData =>{
         )`)
         .attr("style", debugStyle) 
     ;
+
+    // draw donut
     donut.selectAll("donut")
         .data(piedData)
         .join("path")
@@ -843,7 +800,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("class", "donutSlice")
         .attr("opacity", donutSliceOpacityDefault)
         .attr("fill", entry => getEffectColor(entry.data[0]))  // [0] = category name, [1] = value
-        .on("mouseover", function(entry) {
+        .on("mouseover", function(entry){  // show tooltip and emphasize slice under cursor
             const amount = entry.data[1];
             const status = entry.data[0];
 
@@ -869,12 +826,12 @@ d3.csv(dataset).then(rawData =>{
                     .style("margin", `${donutTooltipMargin_p.all}px`)
             ;
         })
-        .on("mousemove", function(){
+        .on("mousemove", function(){  // update tooltip position
             tooltip
                 .style('left', (d3.event.pageX + donutTooltipOffset.x) + 'px')
                 .style('top', (d3.event.pageY + donutTooltipOffset.y) + 'px');
         })
-        .on('mouseout', function(){
+        .on('mouseout', function(){  // make tooltip disappear and donut slices normal
             d3.selectAll(".donutSlice")
                 .transition()
                 .duration(transitionTime)
@@ -902,30 +859,31 @@ d3.csv(dataset).then(rawData =>{
     ;
     
     // title
-    donut.append("text")
+    donut.append("text")  // line 1
         .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Music's Effects");
-    donut.append("text")
+    donut.append("text")  // line 2
         .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("on");
-    donut.append("text")
+    donut.append("text")  // line 3
         .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*2})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Subjects' Mental");
-    donut.append("text")
+    donut.append("text")  // line 4
         .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*3})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Health");
+    // can probably be refactored since all of the aspects are the same aside from position and text
     
     // legend
     const donutLegend = donut.append("g")
@@ -937,14 +895,17 @@ d3.csv(dataset).then(rawData =>{
     donutData.forEach((entry, index) => {
         const label = entry[0];
 
+        // legend container
         const donutLegendRow = donutLegend.append("g")
             .attr("transform", `translate(0, ${index * (donutLegendIconSize.y + donutLegendIconSeparation)})`);
 
+        // legend icon (colored square)
         donutLegendRow.append("rect")
             .attr("width", donutLegendIconSize.x)
             .attr("height", donutLegendIconSize.y)
             .attr("fill", getEffectColor(label));
 
+        // legend text
         donutLegendRow.append("text")
             .attr("x", donutLegendTextOffset.x)
             .attr("y", donutLegendTextOffset.y)

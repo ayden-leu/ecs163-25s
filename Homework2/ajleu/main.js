@@ -1,5 +1,5 @@
-const width = window.innerWidth;
-const height = window.innerHeight;
+let width = window.innerWidth;
+let height = window.innerHeight;
     
 let barGraphLeft = 0, barGraphTop = 40;
 let barGraphMargin = {top: 10, right: 0, bottom: 30, left: 70},
@@ -39,124 +39,144 @@ const tooltipOffsetX = 1;
 const tooltipOffsetY = -140;
 
 const parallelTextLabelSizeX = "15px";
-const donutTextTitleSize = "1.5em";
 const parallelLineWidthDefault = 1;
 const parallelLineWidthFocused = 2;
 const parallelLineOpacityDefault = 0.5;
 const parallelLineOpacityUnfocused = 0.01;
 
-
-
 const donutRadius = 230;
+const donutTextTitleSize = "1.5em";
+
 
 function getServiceColor(platform){
-    if(platform == "Spotify") return "lightgreen";
-    if(platform == "Pandora") return "lightblue";
-    if(platform == "YouTube Music") return "salmon";
-    if(platform == "Apple Music") return "lightgray";
-    if(platform == "Other") return "purple";
-    else return "black";
+    const serviceColor = {
+        "Spotify": "lightgreen",
+        "Pandora": "lightblue",
+        "YouTube Music": "salmon",
+        "Apple Music": "lightgray",
+        "Other": "purple"
+    };
+    return serviceColor[platform] || "black";
 }
 function getMusicGenreColor(genre){
     if(typeof genre === "number") genre = numToGenre(genre);
 
-    if(genre == "Classical") return "gray";
-    if(genre == "Country") return "orange";
-    if(genre == "EDM") return "purple";
-    if(genre == "Folk") return "firebrick";
-    if(genre == "Gospel") return "gold";
-    if(genre == "Hip_hop") return "darkblue";
-    if(genre == "Jazz") return "blue";
-    if(genre == "K_pop") return "green";
-    if(genre == "Latin") return "darkgreen";
-    if(genre == "Lofi") return "steelblue";
-    if(genre == "Metal") return "black";
-    if(genre == "Pop") return "magenta";
-    if(genre == "R_and_B") return "lightblue";
-    if(genre == "Rap") return "cyan";
-    if(genre == "Rock") return "lightgray";
-    if(genre == "Video_game_music") return "orange";
-    else return "white";
+    const musicGenreColor = {
+        "Classical": "gray",
+        "Country": "orange",
+        "EDM": "purple",
+        "Folk": "firebrick",
+        "Gospel": "gold",
+        "Hip_hop": "darkblue",
+        "Jazz": "blue",
+        "K_pop": "green",
+        "Latin": "darkgreen",
+        "Lofi": "steelblue",
+        "Metal": "black",
+        "Pop": "magenta",
+        "R_and_B": "lightblue",
+        "Rap": "cyan",
+        "Rock": "lightgray",
+        "Video_game_music": "orange",
+        "": "white"
+    };
+    return musicGenreColor[genre] || "white";
 }
 function getEffectColor(effect){
-    if(effect == "Improve") return "limegreen";
-    if(effect == "No effect" || effect == "") return "lightgray";
-    if(effect == "Worsen") return "orangered";
-    if(effect == "N/A") return "lightslategray";
-    else return "black";
+    const effectColor = {
+        "Improve": "limegreen",
+        "No effect": "lightgray",
+        "Worsen": "orangered",
+        "N/A": "lightslategray"
+    };
+    return effectColor[effect] || "black";
 }
 
-function musicEffectToNum(effect){
-    if(effect == "Improve") return 1;
-    if(effect == "No effect" || effect == "") return 0;
-    if(effect == "Worsen") return -1;
-    else return 0;
-}
-function numToMusicEffect(effect){
-    if(effect == 1) return "Improve";
-    if(effect == 0) return "No effect";
-    if(effect == -1) return "Worsen";
-    else return "huh";
-}
+// function musicEffectToNum(effect){
+//     const effectToNum = {
+//         "Improve": 2,
+//         "No effect": 1,
+//         "Worsen": 0
+//     };
+//     return effectToNum[effect] || 0;
+// }
+// function numToMusicEffect(effect){
+//     const numToEffect = {
+//         2: "Improve",
+//         1: "No effect",
+//         0: "Worsen"
+//     };
+//     return numToEffect[effect] || "huh";
+// }
 
-function frequencyToNum(freq){
-    if(freq == "Very frequently") return 3;
-    if(freq == "Sometimes") return 2;
-    if(freq == "Rarely") return 1;
-    if(freq == "Never") return 0;
-    else return -1;
-}
-function numToFrequency(freq){
-    if(freq == 3) return "Very frequently";
-    if(freq == 2) return "Sometimes";
-    if(freq == 1) return "Rarely";
-    if(freq == 0) return "Never";
-    else return "huh";
-}
+// function frequencyToNum(freq){
+//     const freqToNum = {
+//         "Very frequently": 3,
+//         "Sometimes": 2,
+//         "Rarely": 1,
+//         "Never": 0
+//     };
+//     return freqToNum[freq] || -1;
+// }
+// function numToFrequency(freq){
+//     const numToFreq = {
+//         3: "Very frequently",
+//         2: "Sometimes",
+//         1: "Rarely",
+//         0: "Never"
+//     };
+//     return numToFreq[freq] || "huh";
+// }
 
+// const genres = [
+//     "Classical", "Country", "EDM", "Folk", "Gospel", "Hip_hop",
+//     "Jazz", "K_pop", "Latin", "Lofi", "Metal", "Pop", "R_and_B",
+//     "Rap", "Rock", "Video_game_music"
+// ];
 function genreToNum(genre){
-    if(genre == "Classical") return 1;
-    if(genre == "Country") return 2;
-    if(genre == "EDM") return 3;
-    if(genre == "Folk") return 4;
-    if(genre == "Gospel") return 5;
-    if(genre == "Hip_hop") return 6;
-    if(genre == "Jazz") return 7;
-    if(genre == "K_pop") return 8;
-    if(genre == "Latin") return 9;
-    if(genre == "Lofi") return 10;
-    if(genre == "Metal") return 11;
-    if(genre == "Pop") return 12;
-    if(genre == "R_and_B") return 13;
-    if(genre == "Rap") return 14;
-    if(genre == "Rock") return 15;
-    if(genre == "Video_game_music") return 16;
-    else return 0;
+    const genreToNum = {
+        "Classical": 1,
+        "Country": 2,
+        "EDM": 3,
+        "Folk": 4,
+        "Gospel": 5,
+        "Hip_hop": 6,
+        "Jazz": 7,
+        "K_pop": 8,
+        "Latin": 9,
+        "Lofi": 10,
+        "Metal": 11,
+        "Pop": 12,
+        "R_and_B": 13,
+        "Rap": 14,
+        "Rock": 15,
+        "Video_game_music": 16
+    };
+    return genreToNum[genre] || 0;
 }
 function numToGenre(genre){
-    if(genre == 1) return "Classical";
-    if(genre == 2) return "Country";
-    if(genre == 3) return "EDM";
-    if(genre == 4) return "Folk";
-    if(genre == 5) return "Gospel";
-    if(genre == 6) return "Hip_hop";
-    if(genre == 7) return "Jazz";
-    if(genre == 8) return "K_pop";
-    if(genre == 9) return "Latin";
-    if(genre == 10) return "Lofi";
-    if(genre == 11) return "Metal";
-    if(genre == 12) return "Pop";
-    if(genre == 13) return "R_and_B";
-    if(genre == 14) return "Rap";
-    if(genre == 15) return "Rock";
-    if(genre == 16) return "Video_game_music";
-    else return "huh";
+    const numToGenre = {
+        1: "Classical",
+        2: "Country",
+        3: "EDM",
+        4: "Folk",
+        5: "Gospel",
+        6: "Hip_hop",
+        7: "Jazz",
+        8: "K_pop",
+        9: "Latin",
+        10: "Lofi",
+        11: "Metal",
+        12: "Pop",
+        13: "R_and_B",
+        14: "Rap",
+        15: "Rock",
+        16: "Video_game_music"
+    };
+    return numToGenre[genre] || "huh";
 }
-const musicGenres = [
-    "", "Classical", "Country", "EDM", "Folk", "Gospel", "Hip_hop",
-    "Jazz", "K_pop", "Latin", "Lofi", "Metal", "Pop", "R_and_B",
-    "Rap", "Rock", "Video_game_music"
-];
+
+
 
 // requirements
 // three visualizations for the dataset
@@ -166,10 +186,7 @@ const musicGenres = [
 //      three visualizations should fit on a fullscreen browser
 //      legends, axis labels, chart titles
 
-// plots
-d3.csv(dataset).then(rawData =>{
-    console.log("rawData", rawData);
-
+function processRawData(rawData){
     rawData.forEach(function(entry){
         entry.age = Number(entry.age);
         entry.hours_per_day = Number(entry.hours_per_day);
@@ -183,7 +200,6 @@ d3.csv(dataset).then(rawData =>{
         entry.depression = Number(entry.depression);
         entry.insomnia = Number(entry.insomnia);
         entry.ocd = Number(entry.ocd);
-        // entry.music_effects = musicEffectToNum(entry.music_effects);
     });
     const filteredData = rawData.filter(entry => 
         entry.bpm <= datasetBpmMax && 
@@ -191,7 +207,7 @@ d3.csv(dataset).then(rawData =>{
         entry.hours_per_day < datasetHoursMax &&
         entry.age !== 0
     );
-    const processedData = filteredData.map(entry=>{
+    return filteredData.map(entry => {
         return {
             "age": entry.age,
             "primary_streaming_service": entry.primary_streaming_service,
@@ -226,9 +242,35 @@ d3.csv(dataset).then(rawData =>{
             "music_effects": entry.music_effects
         };
     });
+}
+
+function extractUniqueEntriesFromCategory(data, category){
+    let newSet = new Set();
+    data.forEach(function(entry){
+        newSet.add(entry[category]);
+    });
+
+    newSet = Array.from(newSet);
+    return newSet;
+}
+
+// plots
+d3.csv(dataset).then(rawData =>{
+    console.log("rawData", rawData);
+
+    // process raw data
+    const processedData = processRawData(rawData);
     console.log("processedData", processedData);
 
+    // extract entries from somecategories for later
+    const services = extractUniqueEntriesFromCategory(processedData, "primary_streaming_service");
+    const genres = extractUniqueEntriesFromCategory(processedData, "fav_genre").sort();
+
+    console.log("services", services);
+    console.log("genres", genres);
     
+
+    // main contianer
     const svg = d3.select("svg");
     
     // tooltip
@@ -247,56 +289,51 @@ d3.csv(dataset).then(rawData =>{
 
 
     ////////////////////////////////
-    // bar chart
+    // stacked bar chart
     //      x:  service
     //      y:  age
 
     // extract relevant data
-    let avgHoursPerServicePerAge = {};
-    let services = new Set();
+    let totalHoursEntriesPerAge = {};
     processedData.forEach(function(entry){
         const age = entry.age;
         const service = entry.primary_streaming_service;
         const hours = entry.hours_per_day;
         
-        // get all services in dataset
-        services.add(service);
         // get totals for each service for each age
-        if(!avgHoursPerServicePerAge[age]){
-            avgHoursPerServicePerAge[age] = {"totalHours": 0, "count": 0};
+        if(!totalHoursEntriesPerAge[age]){
+            totalHoursEntriesPerAge[age] = {"totalHours": 0, "count": 0};
         }
-        if(!avgHoursPerServicePerAge[age][service]){
-            avgHoursPerServicePerAge[age][service] = 0;
+        if(!totalHoursEntriesPerAge[age][service]){
+            totalHoursEntriesPerAge[age][service] = 0;
         }
-        // avgHoursPerServicePerAge[age][service].totalHours += hours;
-        avgHoursPerServicePerAge[age][service]++;
-        avgHoursPerServicePerAge[age].totalHours += hours;
-        avgHoursPerServicePerAge[age].count++;
+        // totalHoursEntriesPerAge[age][service].totalHours += hours;
+        totalHoursEntriesPerAge[age][service]++;
+        totalHoursEntriesPerAge[age].totalHours += hours;
+        totalHoursEntriesPerAge[age].count++;
     });
-    services = Array.from(services);
 
-    console.log("services", services);
-    console.log("avgHoursPerServicePerAge", avgHoursPerServicePerAge);
+    console.log("totalHoursEntriesPerAge", totalHoursEntriesPerAge);
 
-    let avgHoursPerServicePerAgeArray = [];
-    Object.keys(avgHoursPerServicePerAge).forEach(ageEntry => {
+    let averageHoursPerAge = [];
+    Object.keys(totalHoursEntriesPerAge).forEach(ageEntry => {
         const newEntry = {"age": ageEntry, "avgHours": 0, "services": {}};
         
-        const total = avgHoursPerServicePerAge[ageEntry].totalHours;
-        const count = avgHoursPerServicePerAge[ageEntry].count;
+        const total = totalHoursEntriesPerAge[ageEntry].totalHours;
+        const count = totalHoursEntriesPerAge[ageEntry].count;
         newEntry.avgHours = total / count;
         
         services.forEach(serviceEntry => {
-            const serviceCount = avgHoursPerServicePerAge[ageEntry][serviceEntry] || 0;
+            const serviceCount = totalHoursEntriesPerAge[ageEntry][serviceEntry] || 0;
             newEntry.services[serviceEntry] = serviceCount;
         });
-        avgHoursPerServicePerAgeArray.push(newEntry);
+        averageHoursPerAge.push(newEntry);
     });
 
-    console.log("avgHoursPerServicePerAgeArray", avgHoursPerServicePerAgeArray);
+    console.log("averageHoursPerAge", averageHoursPerAge);
 
     // calculate how much each service contributes to the average
-    avgHoursPerServicePerAgeArray.forEach(entry => {
+    averageHoursPerAge.forEach(entry => {
         let total = 0;
         Object.keys(entry.services).forEach(service => {
             total += entry.services[service];
@@ -306,11 +343,11 @@ d3.csv(dataset).then(rawData =>{
             entry.services[service] = entry.services[service] / total * entry.avgHours;
         }); 
     });
-    console.log("avgHoursPerServicePerAgeArray", avgHoursPerServicePerAgeArray)
+    console.log("averageHoursPerAge", averageHoursPerAge)
 
 
     // flatten data so stack can use it
-    const flattenedData = avgHoursPerServicePerAgeArray.map(entry => {
+    const flattenedData = averageHoursPerAge.map(entry => {
         const newEntry = {"age": entry.age, "totalAvg": entry.avgHours};
         services.forEach(service => {
             newEntry[service] = entry.services[service] || 0;  // || 0 is for if there is no value for a service
@@ -337,7 +374,7 @@ d3.csv(dataset).then(rawData =>{
 
     // X range
     const barGraphX = d3.scaleBand()
-        .domain(avgHoursPerServicePerAgeArray.map(entry => entry.age))
+        .domain(averageHoursPerAge.map(entry => entry.age))
         .range([0, barGraphWidth])
         .padding(0.2);
 
@@ -546,8 +583,8 @@ d3.csv(dataset).then(rawData =>{
             
             if(index === 0){
                 axis.call(d3.axisLeft(parallelY[entry])
-                    .ticks(musicGenres.length-1)
-                    .tickFormat(tick => musicGenres[tick])
+                    .ticks(genres.length)
+                    .tickFormat(tick => genres[tick-1])  // tick is a number and genre IDs start at 1
                 );
 
                 axis.selectAll(".tick text")
@@ -598,7 +635,7 @@ d3.csv(dataset).then(rawData =>{
             ${0}
         )`
     );
-    musicGenres.forEach((entry, index) => {
+    genres.forEach((entry, index) => {
         const label = entry;
 
         const parallelLegendRow = parallelLegend.append("g")

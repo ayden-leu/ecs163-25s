@@ -1,44 +1,56 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
-    
-let barGraphLeft = 0, barGraphTop = 40;
-let barGraphMargin = {top: 10, right: 0, bottom: 30, left: 70},
+
+const dataset = "./data/mxmh_survey_results.csv";
+const datasetBpmMax = 300;
+const datasetHoursMax = 24;
+
+const barGraphOffset = {"x": -100 + 161, "y": -240 + 290}, // theres a bunch of inside padding
+    barGraphMargin = {top: 0, right: 0, bottom: 0, left: 0},
     barGraphWidth = Math.max(
-        1000,
-        width/2 - barGraphMargin.left - barGraphMargin.right
+        // 1000,
+        width/2
     ),
     barGraphHeight = Math.max(
-        300,
-        height/3 - barGraphMargin.top - barGraphMargin.bottom
-    );
+        // 300,
+        height/3
+    )
+;
+const barGraphTextLabelX = "Age",
+    barGraphTextLabelY = "Average Hours Per Day",
+    barGraphTextLabelXOffset = {"x": 0 + barGraphWidth/2, "y": 40 + barGraphHeight},
+    barGraphTextLabelYOffset = {"x": -30, "y": -barGraphHeight/2},
+    barGraphTextSizeLabel = 20,
+    barGraphTextSizeTicks = 10,
+    barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
+    barGraphLegendIconSize = {"x": 15, "y": 15},
+    barGraphLegendOffset = {"x": -4 + -barGraphLegendIconSize.x + barGraphWidth, "y": 0},
+    barGraphLegendIconSeparation = 5,
+    barGraphLegendTextOffset = {"x": -5 + -barGraphLegendIconSize.x, "y": 12},
+    barGraphLegendTextSize = 12,
+    barGraphLegendTextAnchor = "end"
+;
 
-let parallelLeft = 0, parallelTop = 180 + barGraphHeight;
-let parallelMargin = {top: 10, right: 0, bottom: 30, left: -100},
+const parallelOffset = {"x": 0, "y": 180 + barGraphHeight},
+    parallelMargin = {top: 10, right: 0, bottom: 30, left: -100},
     parallelWidth = Math.max(
         850,
         width/2 - parallelMargin.left - parallelMargin.right
     ),
     parallelHeight = height/3 + height/6 - parallelMargin.top - parallelMargin.bottom;
 
+const tooltipOffsetX = 1;
+const tooltipOffsetY = -140;
+const tooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0};
+const tooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5};
+const tooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5};
+const parallelTextLabelsXSize = 15;
+
 let donutLeft = -100 + parallelWidth, donutTop = -90 + barGraphHeight;
 let donutMargin = {top: 200, right: 0, bottom: 0, left: 0},
     donutWidth = width - parallelWidth - donutMargin.left - donutMargin.right,
     donutHeight = parallelHeight - donutMargin.top - donutMargin.bottom;
 
-const dataset = "./data/mxmh_survey_results.csv";
-const datasetBpmMax = 300;
-const datasetHoursMax = 24;
-
-const barGraphTextLabelX = "Age";
-const barGraphTextLabelY = "Average Hours Per Day";
-const barGraphTextSizeLabel = "20px";
-const barGraphTextSizeTicks = "10px";
-const barGraphTextLabelXOffsetY = 50;
-const barGraphTextLabelYOffsetY = -40;
-const tooltipOffsetX = 1;
-const tooltipOffsetY = -140;
-
-const parallelTextLabelSizeX = "15px";
 const parallelLineWidthDefault = 1;
 const parallelLineWidthFocused = 2;
 const parallelLineOpacityDefault = 0.5;
@@ -293,7 +305,7 @@ d3.csv(dataset).then(rawData =>{
     //      x:  service
     //      y:  age
 
-    // extract relevant data
+    // get total hours listened to music for each age
     let totalHoursEntriesPerAge = {};
     processedData.forEach(function(entry){
         const age = entry.age;
@@ -302,19 +314,19 @@ d3.csv(dataset).then(rawData =>{
         
         // get totals for each service for each age
         if(!totalHoursEntriesPerAge[age]){
-            totalHoursEntriesPerAge[age] = {"totalHours": 0, "count": 0};
+            totalHoursEntriesPerAge[age] = {"totalHours": 0, "count": 0, "services": {}};
         }
-        if(!totalHoursEntriesPerAge[age][service]){
-            totalHoursEntriesPerAge[age][service] = 0;
+        if(!totalHoursEntriesPerAge[age].services[service]){
+            totalHoursEntriesPerAge[age].services[service] = 0;
         }
         // totalHoursEntriesPerAge[age][service].totalHours += hours;
-        totalHoursEntriesPerAge[age][service]++;
+        totalHoursEntriesPerAge[age].services[service]++;
         totalHoursEntriesPerAge[age].totalHours += hours;
         totalHoursEntriesPerAge[age].count++;
     });
-
     console.log("totalHoursEntriesPerAge", totalHoursEntriesPerAge);
 
+    // calculate averages
     let averageHoursPerAge = [];
     Object.keys(totalHoursEntriesPerAge).forEach(ageEntry => {
         const newEntry = {"age": ageEntry, "avgHours": 0, "services": {}};
@@ -324,12 +336,11 @@ d3.csv(dataset).then(rawData =>{
         newEntry.avgHours = total / count;
         
         services.forEach(serviceEntry => {
-            const serviceCount = totalHoursEntriesPerAge[ageEntry][serviceEntry] || 0;
+            const serviceCount = totalHoursEntriesPerAge[ageEntry].services[serviceEntry] || 0;
             newEntry.services[serviceEntry] = serviceCount;
         });
         averageHoursPerAge.push(newEntry);
     });
-
     console.log("averageHoursPerAge", averageHoursPerAge);
 
     // calculate how much each service contributes to the average
@@ -340,75 +351,79 @@ d3.csv(dataset).then(rawData =>{
         });
         
         Object.keys(entry.services).forEach(service => {
+            // scale percentage by average hours for age
             entry.services[service] = entry.services[service] / total * entry.avgHours;
         }); 
     });
     console.log("averageHoursPerAge", averageHoursPerAge)
 
-
     // flatten data so stack can use it
     const flattenedData = averageHoursPerAge.map(entry => {
         const newEntry = {"age": entry.age, "totalAvg": entry.avgHours};
+
         services.forEach(service => {
             newEntry[service] = entry.services[service] || 0;  // || 0 is for if there is no value for a service
         });
 
         return newEntry;
     });
-
     console.log("flattenedData", flattenedData);
 
     // create area for bar graph
     const barGraph = svg.append("g")
-        .attr("width", barGraphWidth + barGraphMargin.left + barGraphMargin.right)
-        .attr("height", barGraphHeight + barGraphMargin.top + barGraphMargin.bottom)
-        .attr("transform", `translate(${barGraphMargin.left}, ${barGraphTop})`)
+        .attr("width", barGraphWidth) //+ barGraphMargin.left + barGraphMargin.right)
+        .attr("height", barGraphHeight) //+ barGraphMargin.top + barGraphMargin.bottom)
+        .attr("transform", `translate(${barGraphOffset.x}, ${barGraphOffset.y})`)
         .attr("style", "outline: 1px solid black") 
     ;
 
     // bar stack
     const stackedBars = d3.stack().keys(services);
     const stackedData = stackedBars(flattenedData);
-    
     console.log("stackedData", stackedData);
 
-    // X range
+    // x range
     const barGraphX = d3.scaleBand()
         .domain(averageHoursPerAge.map(entry => entry.age))
         .range([0, barGraphWidth])
         .padding(0.2);
 
-    // X axis visual
+    // x axis visual
     const barGraphTicksX = d3.axisBottom(barGraphX);
     barGraph.append("g")
         .attr("transform", `translate(0, ${barGraphHeight})`)
         .call(barGraphTicksX)
-        .attr("font-size", barGraphTextSizeTicks);
+        .attr("font-size", `${barGraphTextSizeTicks}px`);
 
-    // Y range
+    // y range
+    const stackedDataMaxY = d3.max(
+        stackedData, layer => d3.max(
+            layer, entry => entry[1]
+        )
+    );
     const barGraphY = d3.scaleLinear()
-        .domain([0, d3.max(stackedData, layer => d3.max(layer, entry => entry[1])) + 1])
+        .domain([0, stackedDataMaxY + 1])
         .range([barGraphHeight, 0])
         .nice();
 
-    // Y axis visual
-    const barGraphTicksY = d3.axisLeft(barGraphY)
-        .ticks(6);
+    // y axis visual
+    console.log("stackedData", stackedData);
+    const barGraphTicksY = d3.axisLeft(barGraphY).ticks(stackedDataMaxY/2);
     barGraph.append("g").call(barGraphTicksY);
 
-    // X label
+    // x label
     barGraph.append("text")
-        .attr("x", barGraphWidth / 2)
-        .attr("y", barGraphHeight + barGraphTextLabelXOffsetY)
-        .attr("font-size", barGraphTextSizeLabel)
+        .attr("x", barGraphTextLabelXOffset.x)
+        .attr("y", barGraphTextLabelXOffset.y)
+        .attr("font-size", `${barGraphTextSizeLabel}px`)
         .attr("text-anchor", "middle")
         .text(barGraphTextLabelX);
 
-    // Y label
+    // y label
     barGraph.append("text")
-        .attr("x", -(barGraphHeight / 2))
-        .attr("y", barGraphTextLabelYOffsetY)
-        .attr("font-size", barGraphTextSizeLabel)
+        .attr("x", barGraphTextLabelYOffset.y)
+        .attr("y", barGraphTextLabelYOffset.x)
+        .attr("font-size", `${barGraphTextSizeLabel}px`)
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
         .text(barGraphTextLabelY);
@@ -424,9 +439,9 @@ d3.csv(dataset).then(rawData =>{
         .data(entry => entry)
         .enter()
         .append("rect")
-        .attr("x", entry => barGraphX(entry.data.age))
-        .attr("y", entry => barGraphY(entry[1]))
-        .attr("height", entry => barGraphY(entry[0]) - barGraphY(entry[1]))
+        .attr("x", entry => barGraphX(entry.data.age))                       // bars are drawn from top to bottom
+        .attr("y", entry => barGraphY(entry[1]))                             // so the base is actually the top
+        .attr("height", entry => barGraphY(entry[0]) - barGraphY(entry[1]))  // of the bar
         .attr("width", barGraphX.bandwidth())
         .on("mouseover", function(entry) {
             const service = d3.select(this.parentNode).datum().key;
@@ -436,17 +451,32 @@ d3.csv(dataset).then(rawData =>{
             tooltip
                 .style("display", "block")
                 .html(`
-                    <h3 style="margin-bottom:5px; margin-top:5px">Age: ${entry.data.age}</h3>
-                    <p style="margin-bottom:5px; margin-top:5px">
-                        <strong>Total Average (Hours):</strong> ${d3.format(".2f")(average)}
-                    </p>
-                    <p style="margin-bottom:5px; margin-top:5px">
-                        <strong>Service:</strong> ${service}
-                    </p>
-                    <p style="margin-top:5px">
-                        <strong>Service Average (Hours):</strong> ${d3.format(".2f")(serviceAvg)}
-                    </p>
-                `);
+                    <h3>Age: ${entry.data.age}</h3>
+                    <ul>
+                        <li><p class="">
+                            <strong>Total Average (Hours):</strong> ${d3.format(".2f")(average)}
+                        </p></li>
+                        <li><p>
+                            <strong>Service:</strong> ${service}
+                        </p></li>
+                        <li><p>
+                            <strong>Service Average (Hours):</strong> ${d3.format(".2f")(serviceAvg)}
+                        </p></li>
+                    </ul>
+                `)
+                .selectAll("ul")
+                    .style("padding-inline-start", "13px")
+                    .style("margin", `${tooltipMargin_ul.all}px`)
+            ;
+            tooltip.select("h3")
+                .style("margin", `${tooltipMargin_h3.all}px`)
+            ;
+            tooltip.selectAll("li").select("p")
+                .style("margin", `${tooltipMargin_p.all}px`)
+            ;
+            tooltip.select("li:last-child").select("p")
+                .style("margin-bottom", `${tooltipMargin_p.bottom}px`)
+            ;
         })
         .on("mousemove", function(){
             tooltip
@@ -461,8 +491,9 @@ d3.csv(dataset).then(rawData =>{
 
     // title
     barGraph.append("text")
-        .attr("transform", `translate(${0}, ${-10})`)
-        .attr("text-anchor", "start")
+        .attr("x", barGraphTitleOffset.x)
+        .attr("y", barGraphTitleOffset.y)
+        .attr("text-anchor", "middle")
         .attr("font-size", donutTextTitleSize)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
@@ -471,25 +502,26 @@ d3.csv(dataset).then(rawData =>{
     // legend
     const barGraphLegend = barGraph.append("g")
         .attr("transform", `translate(
-            ${0},
-            ${0}
+            ${barGraphLegendOffset.x},
+            ${barGraphLegendOffset.y}
         )`
     );
     services.forEach((entry, index) => {
         const label = entry;
 
         const barGraphLegendRow = barGraphLegend.append("g")
-            .attr("transform", `translate(0, ${index * 20})`);
+            .attr("transform", `translate(0, ${index * (barGraphLegendIconSize.y + barGraphLegendIconSeparation)})`);
 
         barGraphLegendRow.append("rect")
-            .attr("width", 15)
-            .attr("height", 15)
+            .attr("width", barGraphLegendIconSize.x)
+            .attr("height", barGraphLegendIconSize.y)
             .attr("fill", getServiceColor(label));
 
         barGraphLegendRow.append("text")
-            .attr("x", 20)
-            .attr("y", 12)
-            .attr("font-size", "12px")
+            .attr("x", barGraphLegendIconSize.x + barGraphLegendTextOffset.x)
+            .attr("y", barGraphLegendTextOffset.y)
+            .attr("font-size", `${barGraphLegendTextSize}px`)
+            .attr("text-anchor", barGraphLegendTextAnchor)
             .text(label);
     });
 
@@ -514,7 +546,7 @@ d3.csv(dataset).then(rawData =>{
     const parallel = svg.append("g")
         .attr("width", parallelWidth + parallelMargin.left + parallelMargin.right)
         .attr("height", parallelHeight + parallelMargin.top + parallelMargin.bottom)
-        .attr("transform", `translate(${parallelLeft}, ${parallelTop})`)
+        .attr("transform", `translate(${parallelOffset.x}, ${parallelOffset.y})`)
         .attr("style", "outline: 1px solid black")
     ;
 
@@ -615,7 +647,7 @@ d3.csv(dataset).then(rawData =>{
             .attr("y", 5)
             .text(entry => entry.replace("frequency_", "").replaceAll("_", " "))
             .style("fill", "black")
-            .style("font-size", parallelTextLabelSizeX)
+            .style("font-size", `${parallelTextLabelsXSize}px`)
             .attr("transform", "translate(0, -10)")
             .attr("dy", "-0.5em");
     

@@ -228,7 +228,9 @@ d3.csv(dataset).then(rawData =>{
     });
     console.log("processedData", processedData);
 
+    
     const svg = d3.select("svg");
+    
     // tooltip
     const tooltip = d3.select("body").append("div")
         .style("display", "none")
@@ -323,7 +325,9 @@ d3.csv(dataset).then(rawData =>{
     const barGraph = svg.append("g")
         .attr("width", barGraphWidth + barGraphMargin.left + barGraphMargin.right)
         .attr("height", barGraphHeight + barGraphMargin.top + barGraphMargin.bottom)
-        .attr("transform", `translate(${barGraphMargin.left}, ${barGraphTop})`);
+        .attr("transform", `translate(${barGraphMargin.left}, ${barGraphTop})`)
+        .attr("style", "outline: 1px solid black") 
+    ;
 
     // bar stack
     const stackedBars = d3.stack().keys(services);
@@ -418,6 +422,40 @@ d3.csv(dataset).then(rawData =>{
         })
     ;
 
+    // title
+    barGraph.append("text")
+        .attr("transform", `translate(${0}, ${-10})`)
+        .attr("text-anchor", "start")
+        .attr("font-size", donutTextTitleSize)
+        .attr("font-weight", "bold")
+        .style("font-family", "sans-serif")
+        .text("Hours Listened on Service by Various Ages");
+    
+    // legend
+    const barGraphLegend = barGraph.append("g")
+        .attr("transform", `translate(
+            ${0},
+            ${0}
+        )`
+    );
+    services.forEach((entry, index) => {
+        const label = entry;
+
+        const barGraphLegendRow = barGraphLegend.append("g")
+            .attr("transform", `translate(0, ${index * 20})`);
+
+        barGraphLegendRow.append("rect")
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("fill", getServiceColor(label));
+
+        barGraphLegendRow.append("text")
+            .attr("x", 20)
+            .attr("y", 12)
+            .attr("font-size", "12px")
+            .text(label);
+    });
+
     ///////////////////////////////////////////////////////////////////////////
     // parallel coordinatees plot
     //      service
@@ -432,39 +470,41 @@ d3.csv(dataset).then(rawData =>{
             "ocd": entry.ocd
         }
     });
-    const genres = [
+    const parallelCategories = [
         "fav_genre", "anxiety", "depression", "insomnia", "ocd"
-    ]
+    ];
 
     const parallel = svg.append("g")
         .attr("width", parallelWidth + parallelMargin.left + parallelMargin.right)
         .attr("height", parallelHeight + parallelMargin.top + parallelMargin.bottom)
-        .attr("transform", `translate(${parallelLeft}, ${parallelTop})`);
+        .attr("transform", `translate(${parallelLeft}, ${parallelTop})`)
+        .attr("style", "outline: 1px solid black")
+    ;
 
     // X scale
     const parallelX = d3.scalePoint()
         .range([0, parallelWidth])
         .padding(1)
-        .domain(genres);
+        .domain(parallelCategories);
         
     // Y scale
     const parallelY = {};
-    genres.forEach(genre => {  // anxiety, depresssion, insomnia, and ocd are from 0-10
+    parallelCategories.forEach(genre => {  // anxiety, depresssion, insomnia, and ocd are from 0-10
         parallelY[genre] = d3.scaleLinear()
             .domain([0, 10])
             .range([parallelHeight, 0]);
     });
     parallelY["fav_genre"] = d3.scaleLinear()
         .domain([
-            d3.min(parallelData, entry => entry.fav_genre),
             d3.max(parallelData, entry => entry.fav_genre),
+            d3.min(parallelData, entry => entry.fav_genre)
         ])
         .range([parallelHeight, 0]);
     
     // line function
     function path(d) {
         return d3.line()(
-            genres.map(genre => [
+            parallelCategories.map(genre => [
                 parallelX(genre),
                 parallelY[genre](d[genre])
             ])
@@ -498,7 +538,7 @@ d3.csv(dataset).then(rawData =>{
 
     // draw axis
     parallel.selectAll("myAxis")
-        .data(genres)
+        .data(parallelCategories)
         .enter().append("g")
         .attr("transform", entry => `translate(${parallelX(entry)},0)`)
         .each(function(entry, index) {
@@ -551,8 +591,33 @@ d3.csv(dataset).then(rawData =>{
         .style("font-family", "sans-serif")
         .text("Relation of Genre to Self-Reported Aspects");
     
+    // legend
+    const parallelLegend = parallel.append("g")
+        .attr("transform", `translate(
+            ${20},
+            ${0}
+        )`
+    );
+    musicGenres.forEach((entry, index) => {
+        const label = entry;
+
+        const parallelLegendRow = parallelLegend.append("g")
+            .attr("transform", `translate(0, ${index * 20})`);
+
+        parallelLegendRow.append("rect")
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("fill", getMusicGenreColor(label));
+
+        parallelLegendRow.append("text")
+            .attr("x", 20)
+            .attr("y", 12)
+            .attr("font-size", "12px")
+            .text(label);
+    });
+    
     ////////////////////////////////////////
-    // stacked donut chart
+    // donut chart
     //      ring: music_effects
 
     let donutData = {"Improve": 0, "No effect": 0, "Worsen": 0, "N/A": 0};
@@ -583,6 +648,7 @@ d3.csv(dataset).then(rawData =>{
             ${donutLeft + donutMargin.left + donutWidth / 2},
             ${donutTop + donutMargin.top + donutHeight / 2}
         )`)
+        .attr("style", "outline: 1px solid black") 
     ;
     donut.selectAll("path")
         .data(piedData)
@@ -627,25 +693,24 @@ d3.csv(dataset).then(rawData =>{
         .text("Subjects' Mental Health");
     
     // legend
-    const legend = donut.append("g")
+    const donutLegend = donut.append("g")
         .attr("transform", `translate(
             ${-donutWidth / 4 - 30},
             ${-donutHeight - 30}
         )`
     );
-
     donutData.forEach((entry, index) => {
         const label = entry[0];
 
-        const legendRow = legend.append("g")
+        const donutLegendRow = donutLegend.append("g")
             .attr("transform", `translate(0, ${index * 20})`);
 
-        legendRow.append("rect")
+        donutLegendRow.append("rect")
             .attr("width", 15)
             .attr("height", 15)
             .attr("fill", getEffectColor(label));
 
-        legendRow.append("text")
+        donutLegendRow.append("text")
             .attr("x", 20)
             .attr("y", 12)
             .attr("font-size", "12px")

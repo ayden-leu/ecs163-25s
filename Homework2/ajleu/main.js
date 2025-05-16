@@ -4,8 +4,9 @@ let height = window.innerHeight;
 const dataset = "./data/mxmh_survey_results.csv";
 const datasetBpmMax = 300;
 const datasetHoursMax = 24;
-
-const barGraphOffset = {"x": -100 + 161, "y": -240 + 290}, // theres a bunch of inside padding
+const debugStyle = "" //"outline: 1px solid black"
+;
+const barGraphOffset = {"x": 10, "y": 10},
     barGraphWidth = Math.max(
         // 1000,
         width/2
@@ -22,11 +23,11 @@ const barGraphTextLabelX = "Age",
     barGraphTextSizeLabel = 20,
     barGraphTextSizeTicks = 10,
     barGraphLegendIconSize = {"x": 20, "y": 20},
-    barGraphLegendOffset = {"x": -4 + -barGraphLegendIconSize.x + barGraphWidth, "y": 0},
+    barGraphLegendOffset = {"x": -10 + barGraphLegendIconSize.x, "y": 0},
     barGraphLegendIconSeparation = 5,
-    barGraphLegendTextOffset = {"x": -5 + -barGraphLegendIconSize.x, "y": 15},
+    barGraphLegendTextOffset = {"x": 25 + -barGraphLegendIconSize.x, "y": 15},
     barGraphLegendTextSize = 15,
-    barGraphLegendTextAnchor = "end",
+    barGraphLegendTextAnchor = "start",
     barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
     barGraphTitleSize = "1.5em"
 ;
@@ -35,23 +36,30 @@ const barTooltipOffset = {"x": 1, "y": -131},
     barTooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5},
     barTooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5}
 ;
+const barGraphContentShift = {"x": 45, "y": 30}; // needed to "fix" the random padding
+const barGraphTotalTranslation = {
+    "x": barGraphContentShift.x + barGraphOffset.x,
+    "y": barGraphContentShift.y + barGraphOffset.y
+};
 
-const parallelOffset = {"x": -44, "y": 120 + barGraphOffset.y + barGraphHeight},
-    parallelWidth = Math.max(
-        // 850,
-        300 + barGraphWidth
-    ),
+const parallelOffset = {"x": 5, "y": 50 + barGraphTotalTranslation.y + barGraphHeight},
+    parallelWidth = Math.min(width, Math.max(
+        1250,
+        293 + barGraphWidth,
+    )),
     parallelHeight = 80 + height/3
 ;
 const parallelTextLabelsXSize = 20,
-    parallelTextLabelsYSize = 0,
+    parallelTextLabelsYSize = (width > 1280)? 0 : 15,
     parallelTextLabelsXOffset = {"x": 0, "y": -10},
     parallelLineWidthDefault = 1,
     parallelLineWidthFocused = 2,
     parallelLineOpacityDefault = 0.5,
     parallelLineOpacityFocused = 1,
     parallelLineOpacityUnfocused = 0.01,
-    parallelLegendOffset = {"x": 180, "y": -9},
+    parallelLegendOffset = {
+        "x": (width > 1280)? 180 : 0,
+        "y": -9},
     parallelLegendIconSize = {"x": 20, "y": 20},
     parallelLegendIconSeparation = 6,
     parallelLegendTextSize = 15,
@@ -60,26 +68,31 @@ const parallelTextLabelsXSize = 20,
     parallelTitleOffset = {"x": -40 + parallelWidth/2, "y": -45},
     parallelTitleSize = "1.5em"
 ;
+const parallelContentShift = {"x": -44, "y": 72}; // needed to "fix" the random padding
 
-const donutWidth = width/2,
-    donutHeight = donutWidth,
-    donutOffset = {"x": width*3/4, "y": height/2}
-;
-const donutRadius = 230,
-    donutTextSize = 23,
+console.log("width", width);
+
+const donutRadius = 185,
+    donutTextSize = 15,
     donutSliceOpacityDefault = 1,
     donutSliceOpacityFocused = 1,
     donutSliceOpacityUnfocused = 0.3,
-    donutLegendOffset = {"x": -15 + -donutRadius, "y": -15 + -donutRadius},
+    donutLegendOffset = {"x": -25 + -donutRadius, "y": -25 + -donutRadius},
     donutLegendIconSize = {"x": 20, "y": 20},
     donutLegendIconSeparation = 6,
     donutLegendTextSize = 15,
     donutLegendTextOffset = {"x": 25, "y": 12},
     donutLegendTextAnchor = "start",
-    donutTitleOffset = {"x": 0, "y": 0},
+    donutTitleOffset = {"x": 0, "y": -25},
     donutTitleSize = "1.5em"
 ;
-const donutTooltipOffset = {"x": 1, "y": -100},
+const donutWidth = width/2,
+    donutHeight = donutWidth,
+    donutOffset = {
+        "x": 80 + barGraphWidth + -donutLegendOffset.x,
+        "y": 0 + 5-donutLegendOffset.y}
+;
+const donutTooltipOffset = {"x": 1, "y": -55},
     donutTooltipMargin_p = {top: 0, right: 0, bottom: 0, left: 0, all: 5}
 ;
 
@@ -397,9 +410,10 @@ d3.csv(dataset).then(rawData =>{
 
     // create area for bar graph
     const barGraph = svg.append("g")
-        .attr("width", barGraphWidth) //+ barGraphMargin.left + barGraphMargin.right)
-        .attr("height", barGraphHeight) //+ barGraphMargin.top + barGraphMargin.bottom)
+        .attr("width", barGraphWidth)
+        .attr("height", barGraphHeight)
         .attr("transform", `translate(${barGraphOffset.x}, ${barGraphOffset.y})`)
+        .attr("style", debugStyle) 
     ;
 
     // bar stack
@@ -416,7 +430,7 @@ d3.csv(dataset).then(rawData =>{
     // x axis visual
     const barGraphTicksX = d3.axisBottom(barGraphX);
     barGraph.append("g")
-        .attr("transform", `translate(0, ${barGraphHeight})`)
+        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphHeight + barGraphContentShift.y})`)
         .call(barGraphTicksX)
         .attr("font-size", `${barGraphTextSizeTicks}px`);
 
@@ -434,20 +448,23 @@ d3.csv(dataset).then(rawData =>{
     // y axis visual
     console.log("stackedData", stackedData);
     const barGraphTicksY = d3.axisLeft(barGraphY).ticks(stackedDataMaxY/2);
-    barGraph.append("g").call(barGraphTicksY);
+    barGraph.append("g")
+        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphContentShift.y})`)
+        .call(barGraphTicksY)
+    ;
 
     // x label
     barGraph.append("text")
-        .attr("x", barGraphTextLabelXOffset.x)
-        .attr("y", barGraphTextLabelXOffset.y)
+        .attr("x", barGraphTextLabelXOffset.x + barGraphContentShift.x)
+        .attr("y", barGraphTextLabelXOffset.y + barGraphContentShift.y)
         .attr("font-size", `${barGraphTextSizeLabel}px`)
         .attr("text-anchor", "middle")
         .text(barGraphTextLabelX);
 
     // y label
     barGraph.append("text")
-        .attr("x", barGraphTextLabelYOffset.y)
-        .attr("y", barGraphTextLabelYOffset.x)
+        .attr("x", barGraphTextLabelYOffset.y - barGraphContentShift.y)
+        .attr("y", barGraphTextLabelYOffset.x + barGraphContentShift.x)
         .attr("font-size", `${barGraphTextSizeLabel}px`)
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
@@ -458,6 +475,7 @@ d3.csv(dataset).then(rawData =>{
         .data(stackedData)
         .enter()
         .append("g")
+        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphContentShift.y})`)
         .attr("class", "layer")
         .attr("fill", entry => getServiceColor(entry.key))
         .selectAll("rect")
@@ -516,8 +534,8 @@ d3.csv(dataset).then(rawData =>{
 
     // title
     barGraph.append("text")
-        .attr("x", barGraphTitleOffset.x)
-        .attr("y", barGraphTitleOffset.y)
+        .attr("x", barGraphTitleOffset.x + barGraphContentShift.x)
+        .attr("y", barGraphTitleOffset.y + barGraphContentShift.y)
         .attr("text-anchor", "middle")
         .attr("font-size", barGraphTitleSize)
         .attr("font-weight", "bold")
@@ -527,8 +545,8 @@ d3.csv(dataset).then(rawData =>{
     // legend
     const barGraphLegend = barGraph.append("g")
         .attr("transform", `translate(
-            ${barGraphLegendOffset.x},
-            ${barGraphLegendOffset.y}
+            ${barGraphLegendOffset.x + barGraphContentShift.x},
+            ${barGraphLegendOffset.y + barGraphContentShift.y}
         )`)
     ;
     services.forEach((entry, index) => {
@@ -574,6 +592,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("width", parallelWidth)
         .attr("height", parallelHeight)
         .attr("transform", `translate(${parallelOffset.x}, ${parallelOffset.y})`)
+        .attr("style", debugStyle)
     ;
 
     // x scale
@@ -611,6 +630,7 @@ d3.csv(dataset).then(rawData =>{
     parallel.selectAll("parallelLines")
         .data(parallelData)
         .enter().append("path")
+        .attr("transform", `translate(${parallelContentShift.x}, ${parallelContentShift.y})`)
         .attr("class", entry => `line ${numToGenre(entry.fav_genre)}`)
         .attr("d", path)
         .style("fill", "none")
@@ -642,7 +662,7 @@ d3.csv(dataset).then(rawData =>{
     parallel.selectAll("parallelAxis")
         .data(parallelCategories)
         .enter().append("g")
-        .attr("transform", entry => `translate(${parallelX(entry)},0)`)
+        .attr("transform", entry => `translate(${parallelX(entry) + parallelContentShift.x}, ${parallelContentShift.y})`)
         .each(function(entry, index) {
             const axis = d3.select(this);
             
@@ -651,6 +671,30 @@ d3.csv(dataset).then(rawData =>{
                     .ticks(genres.length)
                     .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
                 );
+
+                console.log("entry", entry);
+
+                axis.selectAll(".tick text")
+                    .on("mouseover", function(tickName) {
+                        d3.selectAll(".line")
+                            .transition()
+                            .duration(transitionTime)
+                            .style("opacity", parallelLineOpacityUnfocused);
+                        
+                        d3.selectAll(".line." + numToGenre(tickName))
+                            .transition()
+                            .duration(transitionTime)
+                            .style("opacity", parallelLineOpacityFocused)
+                            .style("stroke-width", parallelLineWidthFocused);
+                    })
+                    .on('mouseout', function(){
+                        d3.selectAll(".line")
+                            .transition()
+                            .duration(transitionTime)
+                            .style("opacity", parallelLineOpacityDefault)
+                            .style("stroke-width", parallelLineWidthDefault);
+                    })
+                ;
             }
             else{
                 axis.call(d3.axisLeft(parallelY[entry])
@@ -673,8 +717,8 @@ d3.csv(dataset).then(rawData =>{
     
     // title
     parallel.append("text")
-        .attr("x", parallelTitleOffset.x)
-        .attr("y", parallelTitleOffset.y)
+        .attr("x", parallelTitleOffset.x + parallelContentShift.x)
+        .attr("y", parallelTitleOffset.y + parallelContentShift.y)
         .attr("text-anchor", "middle")
         .attr("font-size", parallelTitleSize)
         .attr("font-weight", "bold")
@@ -684,8 +728,8 @@ d3.csv(dataset).then(rawData =>{
     // legend
     const parallelLegend = parallel.append("g")
         .attr("transform", `translate(
-            ${parallelLegendOffset.x},
-            ${parallelLegendOffset.y}
+            ${parallelLegendOffset.x + parallelContentShift.x},
+            ${parallelLegendOffset.y + parallelContentShift.y}
         )`
     );
     genres.forEach((entry, index) => {
@@ -791,6 +835,7 @@ d3.csv(dataset).then(rawData =>{
             ${donutOffset.x},
             ${donutOffset.y}
         )`)
+        .attr("style", debugStyle) 
     ;
     donut.selectAll("donut")
         .data(piedData)
@@ -859,23 +904,29 @@ d3.csv(dataset).then(rawData =>{
     
     // title
     donut.append("text")
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y - 25})`)
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("Music's Effects");
     donut.append("text")
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y})`)
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
         .text("on");
     donut.append("text")
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25})`)
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*2})`)
         .attr("text-anchor", "middle")
         .attr("font-size", donutTitleSize)
         .attr("font-weight", "bold")
-        .text("Subjects' Mental Health");
+        .text("Subjects' Mental");
+    donut.append("text")
+        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*3})`)
+        .attr("text-anchor", "middle")
+        .attr("font-size", donutTitleSize)
+        .attr("font-weight", "bold")
+        .text("Health");
     
     // legend
     const donutLegend = donut.append("g")

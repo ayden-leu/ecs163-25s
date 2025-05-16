@@ -6,7 +6,6 @@ const datasetBpmMax = 300;
 const datasetHoursMax = 24;
 
 const barGraphOffset = {"x": -100 + 161, "y": -240 + 290}, // theres a bunch of inside padding
-    barGraphMargin = {top: 0, right: 0, bottom: 0, left: 0},
     barGraphWidth = Math.max(
         // 1000,
         width/2
@@ -22,43 +21,57 @@ const barGraphTextLabelX = "Age",
     barGraphTextLabelYOffset = {"x": -30, "y": -barGraphHeight/2},
     barGraphTextSizeLabel = 20,
     barGraphTextSizeTicks = 10,
-    barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
     barGraphLegendIconSize = {"x": 15, "y": 15},
     barGraphLegendOffset = {"x": -4 + -barGraphLegendIconSize.x + barGraphWidth, "y": 0},
     barGraphLegendIconSeparation = 5,
     barGraphLegendTextOffset = {"x": -5 + -barGraphLegendIconSize.x, "y": 12},
     barGraphLegendTextSize = 12,
-    barGraphLegendTextAnchor = "end"
+    barGraphLegendTextAnchor = "end",
+    barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
+    barGraphTitleSize = "1.5em"
 ;
 
-const parallelOffset = {"x": 0, "y": 180 + barGraphHeight},
-    parallelMargin = {top: 10, right: 0, bottom: 30, left: -100},
+const parallelOffset = {"x": -44, "y": 120 + barGraphOffset.y + barGraphHeight},
     parallelWidth = Math.max(
-        850,
-        width/2 - parallelMargin.left - parallelMargin.right
+        // 850,
+        300 + barGraphWidth
     ),
-    parallelHeight = height/3 + height/6 - parallelMargin.top - parallelMargin.bottom;
-
-const tooltipOffsetX = 1;
-const tooltipOffsetY = -140;
-const tooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0};
-const tooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5};
-const tooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5};
-const parallelTextLabelsXSize = 15;
+    parallelHeight = 80 + height/3
+;
+const parallelTextLabelsXSize = 20,
+    parallelTextLabelsYSize = 0,
+    parallelTextLabelsXOffset = {"x": 0, "y": -10},
+    parallelLineWidthDefault = 1,
+    parallelLineWidthFocused = 2,
+    parallelLineOpacityDefault = 0.5,
+    parallelLineOpacityFocused = 1,
+    parallelLineOpacityUnfocused = 0.01,
+    parallelLineTransitionTime = 100,
+    parallelLegendOffset = {"x": 180, "y": -9},
+    parallelLegendIconSize = {"x": 20, "y": 20},
+    parallelLegendIconSeparation = 6,
+    parallelLegendTextSize = 15,
+    parallelLegendTextOffset = {"x": -5, "y": 13},
+    parallelLegendTextAnchor = "end",
+    parallelTitleOffset = {"x": -40 + parallelWidth/2, "y": -45},
+    parallelTitleSize = "1.5em"
+;
 
 let donutLeft = -100 + parallelWidth, donutTop = -90 + barGraphHeight;
 let donutMargin = {top: 200, right: 0, bottom: 0, left: 0},
     donutWidth = width - parallelWidth - donutMargin.left - donutMargin.right,
     donutHeight = parallelHeight - donutMargin.top - donutMargin.bottom;
 
-const parallelLineWidthDefault = 1;
-const parallelLineWidthFocused = 2;
-const parallelLineOpacityDefault = 0.5;
-const parallelLineOpacityUnfocused = 0.01;
-
 const donutRadius = 230;
 const donutTextTitleSize = "1.5em";
 
+const donutLegendTextSize = 12;
+
+const tooltipOffset = {"x": 1, "y": -130},
+    tooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0},
+    tooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5},
+    tooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5}
+;
 
 function getServiceColor(platform){
     const serviceColor = {
@@ -300,10 +313,11 @@ d3.csv(dataset).then(rawData =>{
     ;
 
 
-    ////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // stacked bar chart
     //      x:  service
     //      y:  age
+    ///////////////////////////////////////////////////////////////////////////
 
     // get total hours listened to music for each age
     let totalHoursEntriesPerAge = {};
@@ -429,7 +443,7 @@ d3.csv(dataset).then(rawData =>{
         .text(barGraphTextLabelY);
     
     // bars
-    barGraph.selectAll("g.layer")
+    barGraph.selectAll("barGraph")
         .data(stackedData)
         .enter()
         .append("g")
@@ -480,8 +494,8 @@ d3.csv(dataset).then(rawData =>{
         })
         .on("mousemove", function(){
             tooltip
-                .style('left', (d3.event.pageX + tooltipOffsetX) + 'px')
-                .style('top', (d3.event.pageY + tooltipOffsetY) + 'px');
+                .style('left', (d3.event.pageX + tooltipOffset.x) + 'px')
+                .style('top', (d3.event.pageY + tooltipOffset.y) + 'px');
         })
         .on('mouseout', function(){
             tooltip
@@ -494,7 +508,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("x", barGraphTitleOffset.x)
         .attr("y", barGraphTitleOffset.y)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTextTitleSize)
+        .attr("font-size", barGraphTitleSize)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
         .text("Hours Listened on Service by Various Ages");
@@ -504,8 +518,8 @@ d3.csv(dataset).then(rawData =>{
         .attr("transform", `translate(
             ${barGraphLegendOffset.x},
             ${barGraphLegendOffset.y}
-        )`
-    );
+        )`)
+    ;
     services.forEach((entry, index) => {
         const label = entry;
 
@@ -525,10 +539,12 @@ d3.csv(dataset).then(rawData =>{
             .text(label);
     });
 
+
     ///////////////////////////////////////////////////////////////////////////
     // parallel coordinatees plot
     //      service
     //      frequency_genre 
+    ///////////////////////////////////////////////////////////////////////////
     const parallelData = processedData.map(entry => {
         return {
             "fav_genre": genreToNum(entry.fav_genre),
@@ -544,19 +560,20 @@ d3.csv(dataset).then(rawData =>{
     ];
 
     const parallel = svg.append("g")
-        .attr("width", parallelWidth + parallelMargin.left + parallelMargin.right)
-        .attr("height", parallelHeight + parallelMargin.top + parallelMargin.bottom)
+        .attr("width", parallelWidth)
+        .attr("height", parallelHeight)
         .attr("transform", `translate(${parallelOffset.x}, ${parallelOffset.y})`)
         .attr("style", "outline: 1px solid black")
     ;
 
-    // X scale
+    // x scale
     const parallelX = d3.scalePoint()
         .range([0, parallelWidth])
         .padding(1)
-        .domain(parallelCategories);
+        .domain(parallelCategories)
+    ;
         
-    // Y scale
+    // y scale
     const parallelY = {};
     parallelCategories.forEach(genre => {  // anxiety, depresssion, insomnia, and ocd are from 0-10
         parallelY[genre] = d3.scaleLinear()
@@ -581,32 +598,38 @@ d3.csv(dataset).then(rawData =>{
     }
 
     // draw lines
-    parallel.selectAll("myPath")
+    parallel.selectAll("parallelLines")
         .data(parallelData)
         .enter().append("path")
         .attr("class", entry => `line ${numToGenre(entry.fav_genre)}`)
         .attr("d", path)
         .style("fill", "none")
         .style("stroke", entry => getMusicGenreColor(entry.fav_genre))
-        .style("opacity", 1)
+        .style("opacity", parallelLineOpacityDefault)
         .style("cursor", "pointer")
         .on("mouseover", function(entry) {
             d3.selectAll(".line")
+                .transition()
+                .duration(parallelLineTransitionTime)
                 .style("opacity", parallelLineOpacityUnfocused);
             
             d3.selectAll(".line." + numToGenre(entry.fav_genre))
-                .style("opacity", parallelLineOpacityDefault)
+                .transition()
+                .duration(parallelLineTransitionTime)
+                .style("opacity", parallelLineOpacityFocused)
                 .style("stroke-width", parallelLineWidthFocused);
         })
         .on('mouseout', function(){
             d3.selectAll(".line")
+                .transition()
+                .duration(parallelLineTransitionTime)
                 .style("opacity", parallelLineOpacityDefault)
                 .style("stroke-width", parallelLineWidthDefault);
         })
     ;
 
     // draw axis
-    parallel.selectAll("myAxis")
+    parallel.selectAll("parallelAxis")
         .data(parallelCategories)
         .enter().append("g")
         .attr("transform", entry => `translate(${parallelX(entry)},0)`)
@@ -616,46 +639,34 @@ d3.csv(dataset).then(rawData =>{
             if(index === 0){
                 axis.call(d3.axisLeft(parallelY[entry])
                     .ticks(genres.length)
-                    .tickFormat(tick => genres[tick-1])  // tick is a number and genre IDs start at 1
+                    .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
                 );
-
-                axis.selectAll(".tick text")
-                    .style("cursor", "pointer")
-                    .on("mouseover", function(tickName) {
-                        d3.selectAll(".line")
-                            .style("opacity", parallelLineOpacityUnfocused);
-                        
-                        d3.selectAll(".line." + numToGenre(tickName))
-                            .style("opacity", parallelLineOpacityDefault)
-                            .style("stroke-width", parallelLineWidthFocused);
-                    })
-                    .on('mouseout', function(){
-                        d3.selectAll(".line")
-                            .style("opacity", parallelLineOpacityDefault)
-                            .style("stroke-width", parallelLineWidthDefault);
-                    });
             }
             else{
                 axis.call(d3.axisLeft(parallelY[entry])
-                    .ticks(10)
+                    .ticks(10)  // scores are from 0-10
                 );
             }
+
+            axis.attr("font-size", `${parallelTextLabelsYSize}px`);
         })
         .append("text")
             .style("text-anchor", "middle")
             .attr("x", 5)
             .attr("y", 5)
-            .text(entry => entry.replace("frequency_", "").replaceAll("_", " "))
+            .text(entry => entry.replaceAll("_", " "))
             .style("fill", "black")
             .style("font-size", `${parallelTextLabelsXSize}px`)
-            .attr("transform", "translate(0, -10)")
+            .attr("x", parallelTextLabelsXOffset.x)
+            .attr("y", parallelTextLabelsXOffset.y)
             .attr("dy", "-0.5em");
     
     // title
     parallel.append("text")
-        .attr("transform", `translate(${160}, ${-40})`)
-        .attr("text-anchor", "start")
-        .attr("font-size", donutTextTitleSize)
+        .attr("x", parallelTitleOffset.x)
+        .attr("y", parallelTitleOffset.y)
+        .attr("text-anchor", "middle")
+        .attr("font-size", parallelTitleSize)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
         .text("Relation of Genre to Self-Reported Aspects");
@@ -663,31 +674,77 @@ d3.csv(dataset).then(rawData =>{
     // legend
     const parallelLegend = parallel.append("g")
         .attr("transform", `translate(
-            ${20},
-            ${0}
+            ${parallelLegendOffset.x},
+            ${parallelLegendOffset.y}
         )`
     );
     genres.forEach((entry, index) => {
         const label = entry;
 
         const parallelLegendRow = parallelLegend.append("g")
-            .attr("transform", `translate(0, ${index * 20})`);
+            .attr("transform", `translate(0, ${index * (parallelLegendIconSize.y + parallelLegendIconSeparation)})`);
 
         parallelLegendRow.append("rect")
-            .attr("width", 15)
-            .attr("height", 15)
-            .attr("fill", getMusicGenreColor(label));
+            .attr("width", parallelLegendIconSize.x)
+            .attr("height", parallelLegendIconSize.y)
+            .attr("fill", getMusicGenreColor(label))
+            .style("cursor", "pointer")
+            .on("mouseover", function() {
+                d3.selectAll(".line")
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityUnfocused);
+                
+                d3.selectAll(".line." + entry)
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityFocused)
+                    .style("stroke-width", parallelLineWidthFocused);
+            })
+            .on('mouseout', function(){
+                d3.selectAll(".line")
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityDefault)
+                    .style("stroke-width", parallelLineWidthDefault);
+            })
+        ;
 
         parallelLegendRow.append("text")
-            .attr("x", 20)
-            .attr("y", 12)
-            .attr("font-size", "12px")
-            .text(label);
+            .attr("x", parallelLegendTextOffset.x)
+            .attr("y", parallelLegendTextOffset.y)
+            .attr("font-size", `${parallelLegendTextSize}px`)
+            .attr("text-anchor", parallelLegendTextAnchor)
+            .text(label.replaceAll("_", " "))
+            .style("cursor", "pointer")
+            .on("mouseover", function() {
+                d3.selectAll(".line")
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityUnfocused);
+                
+                d3.selectAll(".line." + entry)
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityFocused)
+                    .style("stroke-width", parallelLineWidthFocused);
+            })
+            .on('mouseout', function(){
+                d3.selectAll(".line")
+                    .transition()
+                    .duration(parallelLineTransitionTime)
+                    .style("opacity", parallelLineOpacityDefault)
+                    .style("stroke-width", parallelLineWidthDefault);
+            })
+        ;
     });
     
-    ////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////
     // donut chart
     //      ring: music_effects
+    ///////////////////////////////////////////////////////////////////////////
 
     let donutData = {"Improve": 0, "No effect": 0, "Worsen": 0, "N/A": 0};
     processedData.forEach(entry => {
@@ -782,7 +839,7 @@ d3.csv(dataset).then(rawData =>{
         donutLegendRow.append("text")
             .attr("x", 20)
             .attr("y", 12)
-            .attr("font-size", "12px")
+            .attr("font-size", `${donutLegendTextSize}px`)
             .text(label);
     });
 

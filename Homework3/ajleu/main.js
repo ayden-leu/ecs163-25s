@@ -84,10 +84,22 @@ function extractUniqueEntriesFromCategory(data, category){
     return newSet;
 }
 
-// main container
+// main stuff
 const svg = d3.select("svg");
+const tooltip = d3.select("body").append("div")
+    .style("display", "none")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("border", "2px solid black")
+    .style("border-radius", "10px")
+    .style("padding", "10px")
+    .style("padding-bottom", "0")
+    .style("pointer-events", "none")
+    .style("font-family", "sans-serif")
+    .html("you shouldn't see this")
+;
 
-// plots
+// get and process dataset
 d3.csv(dataset).then(rawData =>{
     console.log("rawData", rawData);
 
@@ -95,37 +107,25 @@ d3.csv(dataset).then(rawData =>{
     const processedData = processRawData(rawData);
     console.log("processedData", processedData);
 
-    // extract entries from some categories for later
-    const services = extractUniqueEntriesFromCategory(processedData, "primary_streaming_service");
-    const genres = extractUniqueEntriesFromCategory(processedData, "fav_genre").sort();
+    // then create graphs
+    createBarGraph(processedData);
+    createParallelPlot(processedData);
+    createDonutChart(processedData);
 
-    console.log("services", services);
-    console.log("genres", genres);
-    
-    // tooltip
-    const tooltip = d3.select("body").append("div")
-        .style("display", "none")
-        .style("position", "absolute")
-        .style("background-color", "white")
-        .style("border", "2px solid black")
-        .style("border-radius", "10px")
-        .style("padding", "10px")
-        .style("padding-bottom", "0")
-        .style("pointer-events", "none")
-        .style("font-family", "sans-serif")
-        .html("you shouldn't see this")
-    ;
+    }).catch(function(error){
+    console.log(error);
+});
 
+///////////////////////////////////////////////////////////////////////////
+// stacked bar chart
+//      x:  service
+//      y:  age
+///////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////
-    // stacked bar chart
-    //      x:  service
-    //      y:  age
-    ///////////////////////////////////////////////////////////////////////////
-
+function createBarGraph(dataset){
     // get total hours listened to music for each age
     let totalHoursEntriesPerAge = {};
-    processedData.forEach(function(entry){
+    dataset.forEach(function(entry){
         const age = entry.age;
         const service = entry.primary_streaming_service;
         const hours = entry.hours_per_day;
@@ -142,6 +142,10 @@ d3.csv(dataset).then(rawData =>{
         totalHoursEntriesPerAge[age].count++;
     });
     console.log("totalHoursEntriesPerAge", totalHoursEntriesPerAge);
+
+    // get unique services
+    const services = extractUniqueEntriesFromCategory(dataset, "primary_streaming_service");
+    console.log("services", services);
 
     // calculate averages
     let averageHoursPerAge = [];
@@ -246,7 +250,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
         .text(style.barGraph.labels.y.text);
-    
+
     // bars
     barGraph.selectAll("barGraph")
         .data(stackedData)
@@ -318,7 +322,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
         .text(style.barGraph.title.text);
-    
+
     // legend
     const barGraphLegend = barGraph.append("g")
         .attr("transform", `translate(
@@ -344,17 +348,18 @@ d3.csv(dataset).then(rawData =>{
             .attr("text-anchor", style.barGraph.legend.text.anchor)
             .text(label);
     });
+}
 
-
-    ///////////////////////////////////////////////////////////////////////////
-    // parallel coordinatees plot
-    //      service
-    //      frequency_genre 
-    ///////////////////////////////////////////////////////////////////////////
-    const parallelData = processedData.map(entry => {  // only get data we need
+///////////////////////////////////////////////////////////////////////////
+// parallel coordinatees plot
+//      service
+//      frequency_genre 
+///////////////////////////////////////////////////////////////////////////
+function createParallelPlot(dataset){
+    // trim dataset to what we need
+    const parallelData = dataset.map(entry => {
         return {
             "fav_genre": convert.genreToNum(entry.fav_genre),
-            "bpm": entry.bpm,
             "anxiety": entry.anxiety,
             "depression": entry.depression,
             "insomnia": entry.insomnia,
@@ -364,6 +369,9 @@ d3.csv(dataset).then(rawData =>{
     const parallelCategories = [
         "fav_genre", "anxiety", "depression", "insomnia", "ocd"
     ];
+
+    const genres = extractUniqueEntriesFromCategory(dataset, "fav_genre").sort();
+    console.log("genres", genres);
 
     // parallel coordinates container
     const parallel = svg.append("g")
@@ -393,7 +401,7 @@ d3.csv(dataset).then(rawData =>{
             d3.min(parallelData, entry => entry.fav_genre)
         ])
         .range([style.parallel.height, 0]);
-    
+
     // line definition
     function path(d) {
         return d3.line()(
@@ -489,7 +497,7 @@ d3.csv(dataset).then(rawData =>{
             .style("font-size", `${style.parallel.labels.x.size}px`)
             .attr("x", style.parallel.labels.x.offset.x)
             .attr("y", style.parallel.labels.x.offset.y);
-    
+
     // title
     parallel.append("text")
         .attr("x", style.parallel.title.offset.x + style.parallel.content.offset.x)
@@ -499,7 +507,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
         .text(style.parallel.title.text);
-    
+
     // legend
     const parallelLegend = parallel.append("g")
         .attr("transform", `translate(
@@ -570,16 +578,15 @@ d3.csv(dataset).then(rawData =>{
             })
         ;
     });
-    
+}
 
-
-    ///////////////////////////////////////////////////////////////////////////
-    // donut chart
-    //      ring: music_effects
-    ///////////////////////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////////
+// donut chart
+//      ring: music_effects
+///////////////////////////////////////////////////////////////////////////
+function createDonutChart(dataset){
     let donutData = {"Improve": 0, "No effect": 0, "Worsen": 0, "N/A": 0};
-    processedData.forEach(entry => {
+    dataset.forEach(entry => {
         if(entry.music_effects == ""){
             donutData["N/A"]++;
             return;
@@ -590,7 +597,7 @@ d3.csv(dataset).then(rawData =>{
     donutData = Object.entries(donutData);
 
     console.log("donutData", donutData);
-    
+
     // tooltip messages
     const statusToSentence = {
         "Improve": "said music has <strong>improved</strong> their mental health.",
@@ -682,7 +689,7 @@ d3.csv(dataset).then(rawData =>{
             .style("fill", "black")
             .style("font-size", `${style.donut.slice.text.size}px`)
     ;
-    
+
     // title
     donut.append("text")  // line 1
         .attr("transform", `translate(${style.donut.title.offset.x}, ${style.donut.title.offset.y})`)
@@ -709,7 +716,7 @@ d3.csv(dataset).then(rawData =>{
         .attr("font-weight", "bold")
         .text("Health");
     // can probably be refactored since all of the aspects are the same aside from position and text
-    
+
     // legend
     const donutLegend = donut.append("g")
         .attr("transform", `translate(
@@ -738,7 +745,4 @@ d3.csv(dataset).then(rawData =>{
             .attr("text-anchor", style.donut.legend.text.anchor)
             .text(label);
     });
-
-    }).catch(function(error){
-    console.log(error);
-});
+}

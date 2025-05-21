@@ -6,13 +6,28 @@ const datasetBpmMax = 300;
 const datasetHoursMax = 24;
 const debugStyle = "" //"outline: 1px solid black"
 
+let parallelGenresClicked = 0;
+
 // requirements
-// three visualizations for the dataset
-//      at least one advanced visualization
-//      one should be an overview of the dataset
-//      different dimensions or aspects of the dataset
-//      three visualizations should fit on a fullscreen browser
-//      legends, axis labels, chart titles
+// implement two of the folllowing interaction techniques into your dashboard
+//      selection:  select one or multiple datapoints
+//      brushing:  selection of a subset of the displayed data in the visualization by either dragging the mouse over the data of interest or using a bounding shape to isolate this subset
+//      pan and zoom:  rescale plot to focus on a part of the visualization
+// incorporate one or more of the following transitions
+//      view:  change in viewpoint, offten modeled as the movement of a camera through virutal space (e.g  zoom and pan)
+//      substrate:  changes to spatial substrate in which marks are embedded (e.g  axis rescaling and log transforms as well as bifocal and graphical fisheye distortions)
+//      filtering:  changing which elements are visible
+//      ordering:  change order in which data is displayed
+//      timestep:  apply temporal changes to data values
+//      visualization change:  change visual mappings of the data (e.g  data in bar chart -> pie chart, user edits color palettes)
+//      data schema change:  change the data dimensions being visualized (e.g  making mulltiple bars appear instead of one)
+
+// bar graph:
+//      change to scatterplot (x: age, y: hours per day), pan and zoom interaction
+// parallel:
+//      
+// donut:
+//      menu for choosing data type (data schema change transition)
 
 function processRawData(rawData){
     rawData.forEach(function(entry){
@@ -64,7 +79,7 @@ function processRawData(rawData){
             "frequency_r_and_b": entry.frequency_r_and_b,
             "frequency_rap": entry.frequency_rap,
             "frequency_rock": entry.frequency_rock,
-            "frequency_video_game_music": entry.frequency_video_game_music,
+            "frequency_vgm": entry.frequency_vgm,
             "anxiety": entry.anxiety,
             "depression": entry.depression,
             "insomnia": entry.insomnia,
@@ -354,6 +369,8 @@ function createBarGraph(dataset){
 // parallel coordinatees plot
 //      service
 //      frequency_genre 
+// interaction:  selection (click category to keep it highlighted)
+// transition:  filtering (only shows clicked categories if any are clicked)
 ///////////////////////////////////////////////////////////////////////////
 function createParallelPlot(dataset){
     // trim dataset to what we need
@@ -424,10 +441,16 @@ function createParallelPlot(dataset){
         .style("opacity", style.parallel.line.opacity.default)
         .style("cursor", "pointer")
         .on("mouseover", function(entry){  // emphasize line below cursor
-            d3.selectAll(".line")
-                .transition()
-                .duration(style.transitionTime)
-                .style("opacity", style.parallel.line.opacity.unfocused);
+            d3.selectAll(".line").select(function(){
+                const line = d3.select(this);
+                
+                if(!line.classed("clicked")){
+                    line.transition()
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.unfocused)
+                    .style("stroke-width", style.parallel.line.width.unfocused);
+                }
+            });
             
             d3.selectAll(".line." + convert.numToGenre(entry.fav_genre))
                 .transition()
@@ -435,12 +458,35 @@ function createParallelPlot(dataset){
                 .style("opacity", style.parallel.line.opacity.focused)
                 .style("stroke-width", style.parallel.line.width.focused);
         })
-        .on('mouseout', function(){  // make lines normal when cursor leaves
-            d3.selectAll(".line")
-                .transition()
-                .duration(style.transitionTime)
-                .style("opacity", style.parallel.line.opacity.default)
-                .style("stroke-width", style.parallel.line.width.default);
+        .on("mouseout", function(){  // make lines normal when cursor leaves
+            d3.selectAll(".line").select(function(){
+                const line = d3.select(this);
+                
+                if(!line.classed("clicked")){
+                    if(parallelGenresClicked !== 0){
+                        line.transition()
+                        .duration(style.transitionTime)
+                        .style("opacity", style.parallel.line.opacity.unfocused)
+                        .style("stroke-width", style.parallel.line.width.unfocused);
+                    }
+                    else{
+                        line.transition()
+                        .duration(style.transitionTime)
+                        .style("opacity", style.parallel.line.opacity.default)
+                        .style("stroke-width", style.parallel.line.width.default);
+                    }
+                }
+            });
+        })
+        .on("click", function(entry){
+            d3.selectAll(".line." + convert.numToGenre(entry.fav_genre)).select(function(){
+                const line = d3.select(this);
+                const isClicked = line.classed("clicked");
+                line.classed("clicked", !isClicked);
+
+                if(isClicked)  parallelGenresClicked--;
+                else parallelGenresClicked++;
+            });
         })
     ;
 
@@ -463,11 +509,17 @@ function createParallelPlot(dataset){
                     const tick = d3.select(ticks[index]);
                     tick.select("text")
                         .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
-                        .on("mouseover", function(tickName){  // emphasize the lines belonging to the genre below the cursor
-                            d3.selectAll(".line")
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.unfocused);
+                        .on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
+                            d3.selectAll(".line").select(function(){
+                                const line = d3.select(this);
+                                
+                                if(!line.classed("clicked")){
+                                    line.transition()
+                                    .duration(style.transitionTime)
+                                    .style("opacity", style.parallel.line.opacity.unfocused)
+                                    .style("stroke-width", style.parallel.line.width.unfocused);
+                                }
+                            });
                             
                             d3.selectAll(".line." + convert.numToGenre(tickName))
                                 .transition()
@@ -475,12 +527,35 @@ function createParallelPlot(dataset){
                                 .style("opacity", style.parallel.line.opacity.focused)
                                 .style("stroke-width", style.parallel.line.width.focused);
                         })
-                        .on('mouseout', function(){  // make lines normal when cursor leaves
-                            d3.selectAll(".line")
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.default)
-                                .style("stroke-width", style.parallel.line.width.default);
+                        .on("mouseout", function(){  // make lines normal when cursor leaves
+                            d3.selectAll(".line").select(function(){
+                                const line = d3.select(this);
+                                
+                                if(!line.classed("clicked")){
+                                    if(parallelGenresClicked !== 0){
+                                        line.transition()
+                                        .duration(style.transitionTime)
+                                        .style("opacity", style.parallel.line.opacity.unfocused)
+                                        .style("stroke-width", style.parallel.line.width.unfocused);
+                                    }
+                                    else{
+                                        line.transition()
+                                        .duration(style.transitionTime)
+                                        .style("opacity", style.parallel.line.opacity.default)
+                                        .style("stroke-width", style.parallel.line.width.default);
+                                    }
+                                }
+                            });
+                        })
+                        .on("click", function(tickName){
+                            d3.selectAll(".line." + convert.numToGenre(tickName)).select(function(){
+                                const line = d3.select(this);
+                                const isClicked = line.classed("clicked");
+                                line.classed("clicked", !isClicked);
+
+                                if(isClicked)  parallelGenresClicked--;
+                                else parallelGenresClicked++;
+                            });
                         })
                     ;
 
@@ -494,10 +569,16 @@ function createParallelPlot(dataset){
                         .attr("fill", convert.getMusicGenreColor(genreID))
                         .style("cursor", "pointer")
                         .on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
-                            d3.selectAll(".line")
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.unfocused);
+                            d3.selectAll(".line").select(function(){
+                                const line = d3.select(this);
+                                
+                                if(!line.classed("clicked")){
+                                    line.transition()
+                                    .duration(style.transitionTime)
+                                    .style("opacity", style.parallel.line.opacity.unfocused)
+                                    .style("stroke-width", style.parallel.line.width.unfocused);
+                                }
+                            });
                             
                             d3.selectAll(".line." + convert.numToGenre(tickName))
                                 .transition()
@@ -505,20 +586,38 @@ function createParallelPlot(dataset){
                                 .style("opacity", style.parallel.line.opacity.focused)
                                 .style("stroke-width", style.parallel.line.width.focused);
                         })
-                        .on('mouseout', function(){  // make lines normal when cursor leaves
-                            d3.selectAll(".line")
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.default)
-                                .style("stroke-width", style.parallel.line.width.default);
+                        .on("mouseout", function(){  // make lines normal when cursor leaves
+                            d3.selectAll(".line").select(function(){
+                                const line = d3.select(this);
+                                
+                                if(!line.classed("clicked")){
+                                    if(parallelGenresClicked !== 0){
+                                        line.transition()
+                                        .duration(style.transitionTime)
+                                        .style("opacity", style.parallel.line.opacity.unfocused)
+                                        .style("stroke-width", style.parallel.line.width.unfocused);
+                                    }
+                                    else{
+                                        line.transition()
+                                        .duration(style.transitionTime)
+                                        .style("opacity", style.parallel.line.opacity.default)
+                                        .style("stroke-width", style.parallel.line.width.default);
+                                    }
+                                }
+                            });
+                        })
+                        .on("click", function(tickName){
+                            d3.selectAll(".line." + convert.numToGenre(tickName)).select(function(){
+                                const line = d3.select(this);
+                                const isClicked = line.classed("clicked");
+                                line.classed("clicked", !isClicked);
+
+                                if(isClicked)  parallelGenresClicked--;
+                                else parallelGenresClicked++;
+                            });
                         })
                     ;
-                })
-                    // .append("rect")
-                    // .attr("width", 100)
-                    // .attr("height", 100)
-                    // .attr("fill", "black")
-                ;
+                });
             }
             else{  // the rest are numbers so no other logic needed
                 axis.call(d3.axisLeft(parallelY[entry])

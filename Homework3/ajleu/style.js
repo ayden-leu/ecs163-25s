@@ -77,12 +77,13 @@ parallel.labels = {
 parallel.line = {
     width: {
         default: 1,
-        focused: 2
+        focused: 2,
+        unfocused: 0
     },
     opacity: {
         default: 0.5,
         focused: 1,
-        unfocused: 0.01
+        unfocused: 0
     }
 };
 parallel.legend = {

@@ -16,7 +16,7 @@ export function getMusicGenreColor(genre){
         "Country": "orange",
         "EDM": "blue",
         "Folk": "brown",
-        "Gospel": "gold",
+        "Gospel": "olive",
         "Hip_hop": "mediumvioletred",
         "Jazz": "indigo",
         "K_pop": "green",

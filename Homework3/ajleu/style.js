@@ -71,7 +71,7 @@ parallel.labels = {
         offset: {x: 0, y: "-1em"}
     },
     y: {
-        size: (width > 1280)? 0 : 15
+        size: 15
     }
 };
 parallel.line = {
@@ -86,14 +86,14 @@ parallel.line = {
     }
 };
 parallel.legend = {
-    offset: {x: (width > 1280)? 180 : 0, y: -9},
     icon: {
-        size: {x: 20, y: 20},
+        offset: {x: 5, y: 0},
+        size: {x: 15, y: 15},
         separation: 5
     },
     text: {
-        size: 15,
         offset: {x: -5, y: 13},
+        size: 15,
         anchor: "end"
     }
 };

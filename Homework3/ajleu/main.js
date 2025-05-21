@@ -458,26 +458,66 @@ function createParallelPlot(dataset){
                     .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
                 );
 
-                axis.selectAll(".tick text")
-                    .on("mouseover", function(tickName){  // emphasize the lines belonging to the genre below the cursor
-                        d3.selectAll(".line")
-                            .transition()
-                            .duration(style.transitionTime)
-                            .style("opacity", style.parallel.line.opacity.unfocused);
-                        
-                        d3.selectAll(".line." + convert.numToGenre(tickName))
-                            .transition()
-                            .duration(style.transitionTime)
-                            .style("opacity", style.parallel.line.opacity.focused)
-                            .style("stroke-width", style.parallel.line.width.focused);
-                    })
-                    .on('mouseout', function(){  // make lines normal when cursor leaves
-                        d3.selectAll(".line")
-                            .transition()
-                            .duration(style.transitionTime)
-                            .style("opacity", style.parallel.line.opacity.default)
-                            .style("stroke-width", style.parallel.line.width.default);
-                    })
+                // legend combined with tick labels
+                axis.selectAll(".tick").each(function(genreID, index, ticks){
+                    const tick = d3.select(ticks[index]);
+                    tick.select("text")
+                        .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
+                        .on("mouseover", function(tickName){  // emphasize the lines belonging to the genre below the cursor
+                            d3.selectAll(".line")
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.unfocused);
+                            
+                            d3.selectAll(".line." + convert.numToGenre(tickName))
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.focused)
+                                .style("stroke-width", style.parallel.line.width.focused);
+                        })
+                        .on('mouseout', function(){  // make lines normal when cursor leaves
+                            d3.selectAll(".line")
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.default)
+                                .style("stroke-width", style.parallel.line.width.default);
+                        })
+                    ;
+
+                    tick.append("rect")
+                        .attr("transform", `translate(
+                            -${style.parallel.legend.icon.size.x + style.parallel.legend.icon.offset.x},
+                            -${style.parallel.legend.icon.size.y/2}
+                        )`)
+                        .attr("width", style.parallel.legend.icon.size.x)
+                        .attr("height", style.parallel.legend.icon.size.y)
+                        .attr("fill", convert.getMusicGenreColor(genreID))
+                        .style("cursor", "pointer")
+                        .on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
+                            d3.selectAll(".line")
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.unfocused);
+                            
+                            d3.selectAll(".line." + convert.numToGenre(tickName))
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.focused)
+                                .style("stroke-width", style.parallel.line.width.focused);
+                        })
+                        .on('mouseout', function(){  // make lines normal when cursor leaves
+                            d3.selectAll(".line")
+                                .transition()
+                                .duration(style.transitionTime)
+                                .style("opacity", style.parallel.line.opacity.default)
+                                .style("stroke-width", style.parallel.line.width.default);
+                        })
+                    ;
+                })
+                    // .append("rect")
+                    // .attr("width", 100)
+                    // .attr("height", 100)
+                    // .attr("fill", "black")
                 ;
             }
             else{  // the rest are numbers so no other logic needed
@@ -507,77 +547,6 @@ function createParallelPlot(dataset){
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
         .text(style.parallel.title.text);
-
-    // legend
-    const parallelLegend = parallel.append("g")
-        .attr("transform", `translate(
-            ${style.parallel.legend.offset.x + style.parallel.content.offset.x},
-            ${style.parallel.legend.offset.y + style.parallel.content.offset.y}
-        )`
-    );
-    genres.forEach((entry, index) => {
-        const label = entry;
-
-        // legend row container
-        const parallelLegendRow = parallelLegend.append("g")
-            .attr("transform", `translate(0, ${index * (style.parallel.legend.icon.size.y + style.parallel.legend.icon.separation)})`);
-
-        // legend "icon" (colored square)
-        parallelLegendRow.append("rect")
-            .attr("width", style.parallel.legend.icon.size.x)
-            .attr("height", style.parallel.legend.icon.size.y)
-            .attr("fill", convert.getMusicGenreColor(label))
-            .style("cursor", "pointer")
-            .on("mouseover", function(){  // emphasize lines of the same color as the square below cursor
-                d3.selectAll(".line")
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.unfocused);
-                
-                d3.selectAll(".line." + entry)
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.focused)
-                    .style("stroke-width", style.parallel.line.width.focused);
-            })
-            .on('mouseout', function(){  // make lines normal when cursor leaves
-                d3.selectAll(".line")
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.default)
-                    .style("stroke-width", style.parallel.line.width.default);
-            })
-        ;
-        
-        // legend text
-        parallelLegendRow.append("text")
-            .attr("x", style.parallel.legend.text.offset.x)
-            .attr("y", style.parallel.legend.text.offset.y)
-            .attr("font-size", `${style.parallel.legend.text.size}px`)
-            .attr("text-anchor", style.parallel.legend.text.anchor)
-            .text(label.replaceAll("_", " "))
-            .style("cursor", "pointer")
-            .on("mouseover", function(){  // emphasize lines belonging to the same genre as the text below cursor
-                d3.selectAll(".line")
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.unfocused);
-                
-                d3.selectAll(".line." + entry)
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.focused)
-                    .style("stroke-width", style.parallel.line.width.focused);
-            })
-            .on('mouseout', function(){ // make lines normal when cursor leaves
-                d3.selectAll(".line")
-                    .transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.default)
-                    .style("stroke-width", style.parallel.line.width.default);
-            })
-        ;
-    });
 }
 
 ///////////////////////////////////////////////////////////////////////////

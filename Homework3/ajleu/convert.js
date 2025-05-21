@@ -27,7 +27,7 @@ export function getMusicGenreColor(genre){
         "R_and_B": "indianred",
         "Rap": "cyan",
         "Rock": "slategray",
-        "Video_game_music": "purple"
+        "VGM": "purple"
     };
     return musicGenreColor[genre] || "white";
 }
@@ -58,7 +58,7 @@ export function genreToNum(genre){
         "R_and_B": 13,
         "Rap": 14,
         "Rock": 15,
-        "Video_game_music": 16
+        "VGM": 16
     };
     return genreToNum[genre] || 0;
 }
@@ -79,7 +79,7 @@ export function numToGenre(genre){
         13: "R_and_B",
         14: "Rap",
         15: "Rock",
-        16: "Video_game_music"
+        16: "VGM"
     };
     return numToGenre[genre] || "huh";
 }

@@ -1,186 +1,10 @@
-let width = window.innerWidth;
-let height = window.innerHeight;
+import * as convert from "./convert.js";
+import * as style from "./style.js";
 
 const dataset = "./data/mxmh_survey_results.csv";
 const datasetBpmMax = 300;
 const datasetHoursMax = 24;
 const debugStyle = "" //"outline: 1px solid black"
-;
-const barGraphOffset = {"x": 10, "y": 10},
-    barGraphWidth = width/2,
-    barGraphHeight = height/3
-;
-const barGraphTextLabelX = "Age",
-    barGraphTextLabelY = "Average Hours Per Day",
-    barGraphTextLabelXOffset = {"x": 0 + barGraphWidth/2, "y": 40 + barGraphHeight},
-    barGraphTextLabelYOffset = {"x": -30, "y": -barGraphHeight/2},
-    barGraphTextSizeLabel = 20,
-    barGraphTextSizeTicks = 10,
-    barGraphLegendIconSize = {"x": 20, "y": 20},
-    barGraphLegendOffset = {"x": -10 + barGraphLegendIconSize.x, "y": 0},
-    barGraphLegendIconSeparation = 5,
-    barGraphLegendTextOffset = {"x": 25 + -barGraphLegendIconSize.x, "y": 15},
-    barGraphLegendTextSize = 15,
-    barGraphLegendTextAnchor = "start",
-    barGraphTitle = "Hours Listened on Service by Various Ages",
-    barGraphTitleOffset = {"x": 0 + barGraphWidth/2, "y": -10},
-    barGraphTitleSize = "1.5em"
-;
-const barTooltipOffset = {"x": 1, "y": -131},
-    barTooltipMargin_h3 = {top: 0, right: 0, bottom: 0, left: 0, all: 0},
-    barTooltipMargin_ul = {top: 0, right: 0, bottom: 0, left: 0, all: 5},
-    barTooltipMargin_p = {top: 10, right: 0, bottom: 10, left: 0, all: 5}
-;
-const barGraphContentShift = {"x": 45, "y": 30}; // needed to "fix" the random padding
-const barGraphTotalTranslation = {
-    "x": barGraphContentShift.x + barGraphOffset.x,
-    "y": barGraphContentShift.y + barGraphOffset.y
-};
-
-const parallelOffset = {"x": 5, "y": 50 + barGraphTotalTranslation.y + barGraphHeight},
-    parallelWidth = Math.min(width, Math.max(
-        1250,
-        293 + barGraphWidth,
-    )),
-    parallelHeight = 80 + height/3
-;
-const parallelTextLabelsXSize = 20,
-    parallelTextLabelsYSize = (width > 1280)? 0 : 15,
-    parallelTextLabelsXOffset = {"x": 0, "y": "-1em"},
-    parallelLineWidthDefault = 1,
-    parallelLineWidthFocused = 2,
-    parallelLineOpacityDefault = 0.5,
-    parallelLineOpacityFocused = 1,
-    parallelLineOpacityUnfocused = 0.01,
-    parallelLegendOffset = {
-        "x": (width > 1280)? 180 : 0,
-        "y": -9},
-    parallelLegendIconSize = {"x": 20, "y": 20},
-    parallelLegendIconSeparation = 6,
-    parallelLegendTextSize = 15,
-    parallelLegendTextOffset = {"x": -5, "y": 13},
-    parallelLegendTextAnchor = "end",
-    parallelTitle = "Relation of Genre to Self-Reported Aspects",
-    parallelTitleOffset = {"x": -40 + parallelWidth/2, "y": -45},
-    parallelTitleSize = "1.5em"
-;
-const parallelContentShift = {"x": -44, "y": 72}; // needed to "fix" the random padding
-
-console.log("width", width);
-
-const donutRadius = 185,
-    donutTextSize = 15,
-    donutSliceOpacityDefault = 1,
-    donutSliceOpacityFocused = 1,
-    donutSliceOpacityUnfocused = 0.3,
-    donutLegendOffset = {"x": -25 + -donutRadius, "y": -25 + -donutRadius},
-    donutLegendIconSize = {"x": 20, "y": 20},
-    donutLegendIconSeparation = 6,
-    donutLegendTextSize = 15,
-    donutLegendTextOffset = {"x": 25, "y": 12},
-    donutLegendTextAnchor = "start",
-    donutTitleOffset = {"x": 0, "y": -25},
-    donutTitleSize = "1.5em"
-;
-const donutWidth = width/2,
-    donutHeight = donutWidth,
-    donutOffset = {
-        "x": 80 + barGraphWidth + -donutLegendOffset.x,
-        "y": 0 + 5-donutLegendOffset.y}
-;
-const donutTooltipOffset = {"x": 1, "y": -55},
-    donutTooltipMargin_p = {top: 0, right: 0, bottom: 0, left: 0, all: 5}
-;
-
-const transitionTime = 100;
-
-function getServiceColor(platform){
-    const serviceColor = {
-        "Spotify": "lightgreen",
-        "Pandora": "deepskyblue",
-        "YouTube Music": "salmon",
-        "Apple Music": "gainsboro",
-        "Other": "gray"
-    };
-    return serviceColor[platform] || "lightslategray";
-}
-function getMusicGenreColor(genre){
-    if(typeof genre === "number") genre = numToGenre(genre);
-
-    const musicGenreColor = {
-        "Classical": "gray",
-        "Country": "orange",
-        "EDM": "blue",
-        "Folk": "brown",
-        "Gospel": "gold",
-        "Hip_hop": "mediumvioletred",
-        "Jazz": "indigo",
-        "K_pop": "green",
-        "Latin": "red",
-        "Lofi": "hotpink",
-        "Metal": "silver",
-        "Pop": "magenta",
-        "R_and_B": "indianred",
-        "Rap": "cyan",
-        "Rock": "slategray",
-        "Video_game_music": "purple"
-    };
-    return musicGenreColor[genre] || "white";
-}
-function getEffectColor(effect){
-    const effectColor = {
-        "Improve": "limegreen",
-        "No effect": "lightgray",
-        "Worsen": "orangered",
-        "N/A": "lightslategray"
-    };
-    return effectColor[effect] || "black";
-}
-
-function genreToNum(genre){
-    const genreToNum = {
-        "Classical": 1,
-        "Country": 2,
-        "EDM": 3,
-        "Folk": 4,
-        "Gospel": 5,
-        "Hip_hop": 6,
-        "Jazz": 7,
-        "K_pop": 8,
-        "Latin": 9,
-        "Lofi": 10,
-        "Metal": 11,
-        "Pop": 12,
-        "R_and_B": 13,
-        "Rap": 14,
-        "Rock": 15,
-        "Video_game_music": 16
-    };
-    return genreToNum[genre] || 0;
-}
-function numToGenre(genre){
-    const numToGenre = {
-        1: "Classical",
-        2: "Country",
-        3: "EDM",
-        4: "Folk",
-        5: "Gospel",
-        6: "Hip_hop",
-        7: "Jazz",
-        8: "K_pop",
-        9: "Latin",
-        10: "Lofi",
-        11: "Metal",
-        12: "Pop",
-        13: "R_and_B",
-        14: "Rap",
-        15: "Rock",
-        16: "Video_game_music"
-    };
-    return numToGenre[genre] || "huh";
-}
-
-
 
 // requirements
 // three visualizations for the dataset
@@ -205,12 +29,14 @@ function processRawData(rawData){
         entry.insomnia = Number(entry.insomnia);
         entry.ocd = Number(entry.ocd);
     });
+
     const filteredData = rawData.filter(entry => 
         entry.bpm <= datasetBpmMax && 
         entry.primary_streaming_service !== "" &&
         entry.hours_per_day < datasetHoursMax &&
         entry.age !== 0
     );
+
     return filteredData.map(entry => {
         return {
             "age": entry.age,
@@ -258,6 +84,9 @@ function extractUniqueEntriesFromCategory(data, category){
     return newSet;
 }
 
+// main container
+const svg = d3.select("svg");
+
 // plots
 d3.csv(dataset).then(rawData =>{
     console.log("rawData", rawData);
@@ -266,16 +95,12 @@ d3.csv(dataset).then(rawData =>{
     const processedData = processRawData(rawData);
     console.log("processedData", processedData);
 
-    // extract entries from somecategories for later
+    // extract entries from some categories for later
     const services = extractUniqueEntriesFromCategory(processedData, "primary_streaming_service");
     const genres = extractUniqueEntriesFromCategory(processedData, "fav_genre").sort();
 
     console.log("services", services);
     console.log("genres", genres);
-    
-
-    // main contianer
-    const svg = d3.select("svg");
     
     // tooltip
     const tooltip = d3.select("body").append("div")
@@ -363,9 +188,9 @@ d3.csv(dataset).then(rawData =>{
 
     // create area for bar graph
     const barGraph = svg.append("g")
-        .attr("width", barGraphWidth)
-        .attr("height", barGraphHeight)
-        .attr("transform", `translate(${barGraphOffset.x}, ${barGraphOffset.y})`)
+        .attr("width", style.barGraph.width)
+        .attr("height", style.barGraph.height)
+        .attr("transform", `translate(${style.barGraph.offset.x}, ${style.barGraph.offset.y})`)
         .attr("style", debugStyle) 
     ;
 
@@ -377,15 +202,15 @@ d3.csv(dataset).then(rawData =>{
     // x range
     const barGraphX = d3.scaleBand()
         .domain(averageHoursPerAge.map(entry => entry.age))
-        .range([0, barGraphWidth])
+        .range([0, style.barGraph.width])
         .padding(0.2);
 
     // x axis visual
     const barGraphTicksX = d3.axisBottom(barGraphX);
     barGraph.append("g")
-        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphHeight + barGraphContentShift.y})`)
+        .attr("transform", `translate(${style.barGraph.content.offset.x}, ${style.barGraph.height + style.barGraph.content.offset.y})`)
         .call(barGraphTicksX)
-        .attr("font-size", `${barGraphTextSizeTicks}px`);
+        .attr("font-size", `${style.barGraph.ticks.size}px`);
 
     // y range
     const stackedDataMaxY = d3.max(
@@ -395,41 +220,41 @@ d3.csv(dataset).then(rawData =>{
     );
     const barGraphY = d3.scaleLinear()
         .domain([0, stackedDataMaxY + 1])
-        .range([barGraphHeight, 0])
+        .range([style.barGraph.height, 0])
         .nice();
 
     // y axis visual
     const barGraphTicksY = d3.axisLeft(barGraphY).ticks(stackedDataMaxY/2);
     barGraph.append("g")
-        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphContentShift.y})`)
+        .attr("transform", `translate(${style.barGraph.content.offset.x}, ${style.barGraph.content.offset.y})`)
         .call(barGraphTicksY)
     ;
 
     // x label
     barGraph.append("text")
-        .attr("x", barGraphTextLabelXOffset.x + barGraphContentShift.x)
-        .attr("y", barGraphTextLabelXOffset.y + barGraphContentShift.y)
-        .attr("font-size", `${barGraphTextSizeLabel}px`)
+        .attr("x", style.barGraph.labels.x.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.labels.x.offset.y + style.barGraph.content.offset.y)
+        .attr("font-size", `${style.barGraph.labels.size}px`)
         .attr("text-anchor", "middle")
-        .text(barGraphTextLabelX);
+        .text(style.barGraph.labels.x.text);
 
     // y label
     barGraph.append("text")
-        .attr("x", barGraphTextLabelYOffset.y - barGraphContentShift.y)
-        .attr("y", barGraphTextLabelYOffset.x + barGraphContentShift.x)
-        .attr("font-size", `${barGraphTextSizeLabel}px`)
+        .attr("x", style.barGraph.labels.y.offset.y - style.barGraph.content.offset.y)
+        .attr("y", style.barGraph.labels.y.offset.x + style.barGraph.content.offset.x)
+        .attr("font-size", `${style.barGraph.labels.size}px`)
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
-        .text(barGraphTextLabelY);
+        .text(style.barGraph.labels.y.text);
     
     // bars
     barGraph.selectAll("barGraph")
         .data(stackedData)
         .enter()
         .append("g")
-        .attr("transform", `translate(${barGraphContentShift.x}, ${barGraphContentShift.y})`)
+        .attr("transform", `translate(${style.barGraph.content.offset.x}, ${style.barGraph.content.offset.y})`)
         .attr("class", "layer")
-        .attr("fill", entry => getServiceColor(entry.key))
+        .attr("fill", entry => convert.getServiceColor(entry.key))
         .selectAll("rect")
         .data(entry => entry)
         .enter()
@@ -461,22 +286,22 @@ d3.csv(dataset).then(rawData =>{
                 `)
                 .selectAll("ul")
                     .style("padding-inline-start", "13px")
-                    .style("margin", `${barTooltipMargin_ul.all}px`)
+                    .style("margin", `${style.barGraph.tooltip.ul.margin.all}px`)
             ;
             tooltip.select("h3")
-                .style("margin", `${barTooltipMargin_h3.all}px`)
+                .style("margin", `${style.barGraph.tooltip.h3.margin.all}px`)
             ;
             tooltip.selectAll("li").select("p")
-                .style("margin", `${barTooltipMargin_p.all}px`)
+                .style("margin", `${style.barGraph.tooltip.p.margin.all}px`)
             ;
             tooltip.select("li:last-child").select("p")
-                .style("margin-bottom", `${barTooltipMargin_p.bottom}px`)
+                .style("margin-bottom", `${style.barGraph.tooltip.p.margin.bottom}px`)
             ;
         })
         .on("mousemove", function(){  // update tooltip position
             tooltip
-                .style('left', (d3.event.pageX + barTooltipOffset.x) + 'px')
-                .style('top', (d3.event.pageY + barTooltipOffset.y) + 'px');
+                .style('left', (d3.event.pageX + style.barGraph.tooltip.offset.x) + 'px')
+                .style('top', (d3.event.pageY + style.barGraph.tooltip.offset.y) + 'px');
         })
         .on('mouseout', function(){  // make tooltip disappear
             tooltip
@@ -486,37 +311,37 @@ d3.csv(dataset).then(rawData =>{
 
     // title
     barGraph.append("text")
-        .attr("x", barGraphTitleOffset.x + barGraphContentShift.x)
-        .attr("y", barGraphTitleOffset.y + barGraphContentShift.y)
+        .attr("x", style.barGraph.title.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.title.offset.y + style.barGraph.content.offset.y)
         .attr("text-anchor", "middle")
-        .attr("font-size", barGraphTitleSize)
+        .attr("font-size", style.barGraph.title.size)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
-        .text(barGraphTitle);
+        .text(style.barGraph.title.text);
     
     // legend
     const barGraphLegend = barGraph.append("g")
         .attr("transform", `translate(
-            ${barGraphLegendOffset.x + barGraphContentShift.x},
-            ${barGraphLegendOffset.y + barGraphContentShift.y}
+            ${style.barGraph.legend.offset.x + style.barGraph.content.offset.x},
+            ${style.barGraph.legend.offset.y + style.barGraph.content.offset.y}
         )`)
     ;
     services.forEach((entry, index) => {
         const label = entry;
 
         const barGraphLegendRow = barGraphLegend.append("g")
-            .attr("transform", `translate(0, ${index * (barGraphLegendIconSize.y + barGraphLegendIconSeparation)})`);
+            .attr("transform", `translate(0, ${index * (style.barGraph.legend.icon.size.y + style.barGraph.legend.icon.separation)})`);
 
         barGraphLegendRow.append("rect")
-            .attr("width", barGraphLegendIconSize.x)
-            .attr("height", barGraphLegendIconSize.y)
-            .attr("fill", getServiceColor(label));
+            .attr("width", style.barGraph.legend.icon.size.x)
+            .attr("height", style.barGraph.legend.icon.size.y)
+            .attr("fill", convert.getServiceColor(label));
 
         barGraphLegendRow.append("text")
-            .attr("x", barGraphLegendIconSize.x + barGraphLegendTextOffset.x)
-            .attr("y", barGraphLegendTextOffset.y)
-            .attr("font-size", `${barGraphLegendTextSize}px`)
-            .attr("text-anchor", barGraphLegendTextAnchor)
+            .attr("x", style.barGraph.legend.icon.size.x + style.barGraph.legend.text.offset.x)
+            .attr("y", style.barGraph.legend.text.offset.y)
+            .attr("font-size", `${style.barGraph.legend.text.size}px`)
+            .attr("text-anchor", style.barGraph.legend.text.anchor)
             .text(label);
     });
 
@@ -528,7 +353,7 @@ d3.csv(dataset).then(rawData =>{
     ///////////////////////////////////////////////////////////////////////////
     const parallelData = processedData.map(entry => {  // only get data we need
         return {
-            "fav_genre": genreToNum(entry.fav_genre),
+            "fav_genre": convert.genreToNum(entry.fav_genre),
             "bpm": entry.bpm,
             "anxiety": entry.anxiety,
             "depression": entry.depression,
@@ -542,15 +367,15 @@ d3.csv(dataset).then(rawData =>{
 
     // parallel coordinates container
     const parallel = svg.append("g")
-        .attr("width", parallelWidth)
-        .attr("height", parallelHeight)
-        .attr("transform", `translate(${parallelOffset.x}, ${parallelOffset.y})`)
+        .attr("width", style.parallel.width)
+        .attr("height", style.parallel.height)
+        .attr("transform", `translate(${style.parallel.offset.x}, ${style.parallel.offset.y})`)
         .attr("style", debugStyle)
     ;
 
     // x scale
     const parallelX = d3.scalePoint()
-        .range([0, parallelWidth])
+        .range([0, style.parallel.width])
         .padding(1)
         .domain(parallelCategories)
     ;
@@ -560,14 +385,14 @@ d3.csv(dataset).then(rawData =>{
     parallelCategories.forEach(genre => {  
         parallelY[genre] = d3.scaleLinear()
             .domain([0, 10])  // anxiety, depresssion, insomnia, and ocd are from 0-10
-            .range([parallelHeight, 0]);
+            .range([style.parallel.height, 0]);
     });
     parallelY["fav_genre"] = d3.scaleLinear()
         .domain([  // genres are on ID form so we can use that for the numerical range
             d3.max(parallelData, entry => entry.fav_genre),
             d3.min(parallelData, entry => entry.fav_genre)
         ])
-        .range([parallelHeight, 0]);
+        .range([style.parallel.height, 0]);
     
     // line definition
     function path(d) {
@@ -583,31 +408,31 @@ d3.csv(dataset).then(rawData =>{
     parallel.selectAll("parallelLines")
         .data(parallelData)
         .enter().append("path")
-        .attr("transform", `translate(${parallelContentShift.x}, ${parallelContentShift.y})`)
-        .attr("class", entry => `line ${numToGenre(entry.fav_genre)}`)
+        .attr("transform", `translate(${style.parallel.content.offset.x}, ${style.parallel.content.offset.y})`)
+        .attr("class", entry => `line ${convert.numToGenre(entry.fav_genre)}`)
         .attr("d", path)
         .style("fill", "none")
-        .style("stroke", entry => getMusicGenreColor(entry.fav_genre))
-        .style("opacity", parallelLineOpacityDefault)
+        .style("stroke", entry => convert.getMusicGenreColor(entry.fav_genre))
+        .style("opacity", style.parallel.line.opacity.default)
         .style("cursor", "pointer")
         .on("mouseover", function(entry){  // emphasize line below cursor
             d3.selectAll(".line")
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", parallelLineOpacityUnfocused);
+                .duration(style.transitionTime)
+                .style("opacity", style.parallel.line.opacity.unfocused);
             
-            d3.selectAll(".line." + numToGenre(entry.fav_genre))
+            d3.selectAll(".line." + convert.numToGenre(entry.fav_genre))
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", parallelLineOpacityFocused)
-                .style("stroke-width", parallelLineWidthFocused);
+                .duration(style.transitionTime)
+                .style("opacity", style.parallel.line.opacity.focused)
+                .style("stroke-width", style.parallel.line.width.focused);
         })
         .on('mouseout', function(){  // make lines normal when cursor leaves
             d3.selectAll(".line")
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", parallelLineOpacityDefault)
-                .style("stroke-width", parallelLineWidthDefault);
+                .duration(style.transitionTime)
+                .style("opacity", style.parallel.line.opacity.default)
+                .style("stroke-width", style.parallel.line.width.default);
         })
     ;
 
@@ -615,7 +440,7 @@ d3.csv(dataset).then(rawData =>{
     parallel.selectAll("parallelAxis")
         .data(parallelCategories)
         .enter().append("g")
-        .attr("transform", entry => `translate(${parallelX(entry) + parallelContentShift.x}, ${parallelContentShift.y})`)
+        .attr("transform", entry => `translate(${parallelX(entry) + style.parallel.content.offset.x}, ${style.parallel.content.offset.y})`)
         .each(function(entry, index) {
             const axis = d3.select(this);
             
@@ -629,21 +454,21 @@ d3.csv(dataset).then(rawData =>{
                     .on("mouseover", function(tickName){  // emphasize the lines belonging to the genre below the cursor
                         d3.selectAll(".line")
                             .transition()
-                            .duration(transitionTime)
-                            .style("opacity", parallelLineOpacityUnfocused);
+                            .duration(style.transitionTime)
+                            .style("opacity", style.parallel.line.opacity.unfocused);
                         
-                        d3.selectAll(".line." + numToGenre(tickName))
+                        d3.selectAll(".line." + convert.numToGenre(tickName))
                             .transition()
-                            .duration(transitionTime)
-                            .style("opacity", parallelLineOpacityFocused)
-                            .style("stroke-width", parallelLineWidthFocused);
+                            .duration(style.transitionTime)
+                            .style("opacity", style.parallel.line.opacity.focused)
+                            .style("stroke-width", style.parallel.line.width.focused);
                     })
                     .on('mouseout', function(){  // make lines normal when cursor leaves
                         d3.selectAll(".line")
                             .transition()
-                            .duration(transitionTime)
-                            .style("opacity", parallelLineOpacityDefault)
-                            .style("stroke-width", parallelLineWidthDefault);
+                            .duration(style.transitionTime)
+                            .style("opacity", style.parallel.line.opacity.default)
+                            .style("stroke-width", style.parallel.line.width.default);
                     })
                 ;
             }
@@ -653,7 +478,7 @@ d3.csv(dataset).then(rawData =>{
                 );
             }
 
-            axis.attr("font-size", `${parallelTextLabelsYSize}px`);
+            axis.attr("font-size", `${style.parallel.labels.y.size}px`);
         })
         .append("text")  // the names of the categories for each vertical axis thing
             .style("text-anchor", "middle")
@@ -661,25 +486,25 @@ d3.csv(dataset).then(rawData =>{
             .attr("y", 5)
             .text(entry => entry.replaceAll("_", " "))
             .style("fill", "black")
-            .style("font-size", `${parallelTextLabelsXSize}px`)
-            .attr("x", parallelTextLabelsXOffset.x)
-            .attr("y", parallelTextLabelsXOffset.y);
+            .style("font-size", `${style.parallel.labels.x.size}px`)
+            .attr("x", style.parallel.labels.x.offset.x)
+            .attr("y", style.parallel.labels.x.offset.y);
     
     // title
     parallel.append("text")
-        .attr("x", parallelTitleOffset.x + parallelContentShift.x)
-        .attr("y", parallelTitleOffset.y + parallelContentShift.y)
+        .attr("x", style.parallel.title.offset.x + style.parallel.content.offset.x)
+        .attr("y", style.parallel.title.offset.y + style.parallel.content.offset.y)
         .attr("text-anchor", "middle")
-        .attr("font-size", parallelTitleSize)
+        .attr("font-size", style.parallel.title.size)
         .attr("font-weight", "bold")
         .style("font-family", "sans-serif")
-        .text(parallelTitle);
+        .text(style.parallel.title.text);
     
     // legend
     const parallelLegend = parallel.append("g")
         .attr("transform", `translate(
-            ${parallelLegendOffset.x + parallelContentShift.x},
-            ${parallelLegendOffset.y + parallelContentShift.y}
+            ${style.parallel.legend.offset.x + style.parallel.content.offset.x},
+            ${style.parallel.legend.offset.y + style.parallel.content.offset.y}
         )`
     );
     genres.forEach((entry, index) => {
@@ -687,61 +512,61 @@ d3.csv(dataset).then(rawData =>{
 
         // legend row container
         const parallelLegendRow = parallelLegend.append("g")
-            .attr("transform", `translate(0, ${index * (parallelLegendIconSize.y + parallelLegendIconSeparation)})`);
+            .attr("transform", `translate(0, ${index * (style.parallel.legend.icon.size.y + style.parallel.legend.icon.separation)})`);
 
         // legend "icon" (colored square)
         parallelLegendRow.append("rect")
-            .attr("width", parallelLegendIconSize.x)
-            .attr("height", parallelLegendIconSize.y)
-            .attr("fill", getMusicGenreColor(label))
+            .attr("width", style.parallel.legend.icon.size.x)
+            .attr("height", style.parallel.legend.icon.size.y)
+            .attr("fill", convert.getMusicGenreColor(label))
             .style("cursor", "pointer")
             .on("mouseover", function(){  // emphasize lines of the same color as the square below cursor
                 d3.selectAll(".line")
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityUnfocused);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.unfocused);
                 
                 d3.selectAll(".line." + entry)
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityFocused)
-                    .style("stroke-width", parallelLineWidthFocused);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.focused)
+                    .style("stroke-width", style.parallel.line.width.focused);
             })
             .on('mouseout', function(){  // make lines normal when cursor leaves
                 d3.selectAll(".line")
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityDefault)
-                    .style("stroke-width", parallelLineWidthDefault);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.default)
+                    .style("stroke-width", style.parallel.line.width.default);
             })
         ;
         
         // legend text
         parallelLegendRow.append("text")
-            .attr("x", parallelLegendTextOffset.x)
-            .attr("y", parallelLegendTextOffset.y)
-            .attr("font-size", `${parallelLegendTextSize}px`)
-            .attr("text-anchor", parallelLegendTextAnchor)
+            .attr("x", style.parallel.legend.text.offset.x)
+            .attr("y", style.parallel.legend.text.offset.y)
+            .attr("font-size", `${style.parallel.legend.text.size}px`)
+            .attr("text-anchor", style.parallel.legend.text.anchor)
             .text(label.replaceAll("_", " "))
             .style("cursor", "pointer")
             .on("mouseover", function(){  // emphasize lines belonging to the same genre as the text below cursor
                 d3.selectAll(".line")
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityUnfocused);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.unfocused);
                 
                 d3.selectAll(".line." + entry)
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityFocused)
-                    .style("stroke-width", parallelLineWidthFocused);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.focused)
+                    .style("stroke-width", style.parallel.line.width.focused);
             })
             .on('mouseout', function(){ // make lines normal when cursor leaves
                 d3.selectAll(".line")
                     .transition()
-                    .duration(transitionTime)
-                    .style("opacity", parallelLineOpacityDefault)
-                    .style("stroke-width", parallelLineWidthDefault);
+                    .duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.default)
+                    .style("stroke-width", style.parallel.line.width.default);
             })
         ;
     });
@@ -779,15 +604,15 @@ d3.csv(dataset).then(rawData =>{
         .value(entry => entry[1]);  // [[key, value]. [key, value], ...]
     const piedData = pie(donutData);
     const arc = d3.arc()
-        .innerRadius(donutRadius * 0.7)  // donut hole size
-        .outerRadius(donutRadius)
+        .innerRadius(style.donut.radius * 0.7)  // donut hole size
+        .outerRadius(style.donut.radius)
     ;
 
     // donut container
     const donut = svg.append("g")
         .attr("transform", `translate(
-            ${donutOffset.x},
-            ${donutOffset.y}
+            ${style.donut.offset.x},
+            ${style.donut.offset.y}
         )`)
         .attr("style", debugStyle) 
     ;
@@ -798,22 +623,22 @@ d3.csv(dataset).then(rawData =>{
         .join("path")
         .attr("d", arc)
         .attr("class", "donutSlice")
-        .attr("opacity", donutSliceOpacityDefault)
-        .attr("fill", entry => getEffectColor(entry.data[0]))  // [0] = category name, [1] = value
+        .attr("opacity", style.donut.slice.opacity.default)
+        .attr("fill", entry => convert.getEffectColor(entry.data[0]))  // [0] = category name, [1] = value
         .on("mouseover", function(entry){  // show tooltip and emphasize slice under cursor
             const amount = entry.data[1];
             const status = entry.data[0];
 
             d3.selectAll(".donutSlice")
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", donutSliceOpacityUnfocused)
+                .duration(style.transitionTime)
+                .style("opacity", style.donut.slice.opacity.unfocused)
             ;
 
             d3.select(this)
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", donutSliceOpacityFocused)
+                .duration(style.transitionTime)
+                .style("opacity", style.donut.slice.opacity.focused)
             ;
 
             tooltip
@@ -823,19 +648,19 @@ d3.csv(dataset).then(rawData =>{
                     <p><strong>${amount}</strong> people ${statusToSentence[status]}</p>
                 `)
                 .selectAll("p")
-                    .style("margin", `${donutTooltipMargin_p.all}px`)
+                    .style("margin", `${style.donut.tooltip.p.margin.all}px`)
             ;
         })
         .on("mousemove", function(){  // update tooltip position
             tooltip
-                .style('left', (d3.event.pageX + donutTooltipOffset.x) + 'px')
-                .style('top', (d3.event.pageY + donutTooltipOffset.y) + 'px');
+                .style('left', (d3.event.pageX + style.donut.tooltip.offset.x) + 'px')
+                .style('top', (d3.event.pageY + style.donut.tooltip.offset.y) + 'px');
         })
         .on('mouseout', function(){  // make tooltip disappear and donut slices normal
             d3.selectAll(".donutSlice")
                 .transition()
-                .duration(transitionTime)
-                .style("opacity", donutSliceOpacityDefault)
+                .duration(style.transitionTime)
+                .style("opacity", style.donut.slice.opacity.default)
             ;
 
             tooltip
@@ -855,32 +680,32 @@ d3.csv(dataset).then(rawData =>{
             .text(entry => entry.data[1]))
             .style("pointer-events", "none")
             .style("fill", "black")
-            .style("font-size", `${donutTextSize}px`)
+            .style("font-size", `${style.donut.slice.text.size}px`)
     ;
     
     // title
     donut.append("text")  // line 1
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y})`)
+        .attr("transform", `translate(${style.donut.title.offset.x}, ${style.donut.title.offset.y})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTitleSize)
+        .attr("font-size", style.donut.title.size)
         .attr("font-weight", "bold")
         .text("Music's Effects");
     donut.append("text")  // line 2
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25})`)
+        .attr("transform", `translate(${style.donut.title.offset.x}, ${style.donut.title.offset.y + 25})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTitleSize)
+        .attr("font-size", style.donut.title.size)
         .attr("font-weight", "bold")
         .text("on");
     donut.append("text")  // line 3
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*2})`)
+        .attr("transform", `translate(${style.donut.title.offset.x}, ${style.donut.title.offset.y + 25*2})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTitleSize)
+        .attr("font-size", style.donut.title.size)
         .attr("font-weight", "bold")
         .text("Subjects' Mental");
     donut.append("text")  // line 4
-        .attr("transform", `translate(${donutTitleOffset.x}, ${donutTitleOffset.y + 25*3})`)
+        .attr("transform", `translate(${style.donut.title.offset.x}, ${style.donut.title.offset.y + 25*3})`)
         .attr("text-anchor", "middle")
-        .attr("font-size", donutTitleSize)
+        .attr("font-size", style.donut.title.size)
         .attr("font-weight", "bold")
         .text("Health");
     // can probably be refactored since all of the aspects are the same aside from position and text
@@ -888,8 +713,8 @@ d3.csv(dataset).then(rawData =>{
     // legend
     const donutLegend = donut.append("g")
         .attr("transform", `translate(
-            ${donutLegendOffset.x},
-            ${donutLegendOffset.y}
+            ${style.donut.legend.offset.x},
+            ${style.donut.legend.offset.y}
         )`
     );
     donutData.forEach((entry, index) => {
@@ -897,20 +722,20 @@ d3.csv(dataset).then(rawData =>{
 
         // legend container
         const donutLegendRow = donutLegend.append("g")
-            .attr("transform", `translate(0, ${index * (donutLegendIconSize.y + donutLegendIconSeparation)})`);
+            .attr("transform", `translate(0, ${index * (style.donut.legend.icon.size.y + style.donut.legend.icon.separation)})`);
 
         // legend icon (colored square)
         donutLegendRow.append("rect")
-            .attr("width", donutLegendIconSize.x)
-            .attr("height", donutLegendIconSize.y)
-            .attr("fill", getEffectColor(label));
+            .attr("width", style.donut.legend.icon.size.x)
+            .attr("height", style.donut.legend.icon.size.y)
+            .attr("fill", convert.getEffectColor(label));
 
         // legend text
         donutLegendRow.append("text")
-            .attr("x", donutLegendTextOffset.x)
-            .attr("y", donutLegendTextOffset.y)
-            .attr("font-size", `${donutLegendTextSize}px`)
-            .attr("text-anchor", donutLegendTextAnchor)
+            .attr("x", style.donut.legend.text.offset.x)
+            .attr("y", style.donut.legend.text.offset.y)
+            .attr("font-size", `${style.donut.legend.text.size}px`)
+            .attr("text-anchor", style.donut.legend.text.anchor)
             .text(label);
     });
 

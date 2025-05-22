@@ -24,7 +24,7 @@ let parallelGenresClicked = 0;
 
 // bar graph:
 //      change to scatterplot (x: age, y: hours per day)
-//      interaction:  pan and zoom
+//      interaction:  brushing
 //      transition:  
 // donut:
 //      menu for choosing data type (data schema change transition)
@@ -125,7 +125,8 @@ d3.csv(dataset).then(rawData =>{
     console.log("processedData", processedData);
 
     // then create graphs
-    createBarGraph(processedData);
+    // createBarGraph(processedData);
+    createScatterPlot(processedData);
     createParallelPlot(processedData);
     createDonutChart(processedData);
 
@@ -138,7 +139,6 @@ d3.csv(dataset).then(rawData =>{
 //      x:  service
 //      y:  age
 ///////////////////////////////////////////////////////////////////////////
-
 function createBarGraph(dataset){
     // get total hours listened to music for each age
     let totalHoursEntriesPerAge = {};
@@ -363,6 +363,186 @@ function createBarGraph(dataset){
             .attr("y", style.barGraph.legend.text.offset.y)
             .attr("font-size", `${style.barGraph.legend.text.size}px`)
             .attr("text-anchor", style.barGraph.legend.text.anchor)
+            .text(label);
+    });
+}
+
+///////////////////////////////////////////////////////////////////////////
+// scatter plot
+//      x:  age
+//      y:  hours per day
+///////////////////////////////////////////////////////////////////////////
+function createScatterPlot(dataset){
+    // get unique services
+    const services = extractUniqueEntriesFromCategory(dataset, "primary_streaming_service");
+    console.log("services", services);
+
+    // create area for scatterplot
+    const scatterPlot = svg.append("g")
+        .attr("width", style.scatterPlot.width)
+        .attr("height", style.scatterPlot.height)
+        .attr("transform", `translate(${style.scatterPlot.offset.x}, ${style.scatterPlot.offset.y})`)
+        .attr("style", debugStyle) 
+    ;
+
+    // x range
+    const scatterPlotX = d3.scaleLinear()
+        .domain([
+            d3.min(dataset, entry => entry.age)-1,
+            d3.max(dataset, entry => entry.age)+1
+        ])
+        .range([0, style.scatterPlot.width])
+    ;
+
+    // x axis visual
+    const scatterPlotTicksX = d3.axisBottom(scatterPlotX);
+    scatterPlot.append("g")
+        .attr("transform", `translate(${style.scatterPlot.content.offset.x}, ${style.scatterPlot.height + style.scatterPlot.content.offset.y})`)
+        .call(scatterPlotTicksX)
+        .attr("font-size", `${style.scatterPlot.ticks.size}px`)
+    ;
+
+    // y range
+    const datasetMaxY = d3.max(dataset, entry => entry.hours_per_day);
+    const scatterPlotY = d3.scaleLinear()
+        .domain([0, datasetMaxY + 1])
+        .range([style.scatterPlot.height, 0])
+        .nice();
+
+    // y axis visual
+    const scatterPlotTicksY = d3.axisLeft(scatterPlotY).ticks(datasetMaxY/2);
+    scatterPlot.append("g")
+        .attr("transform", `translate(${style.scatterPlot.content.offset.x}, ${style.scatterPlot.content.offset.y})`)
+        .call(scatterPlotTicksY)
+    ;
+
+    // x label
+    scatterPlot.append("text")
+        .attr("x", style.scatterPlot.labels.x.offset.x + style.scatterPlot.content.offset.x)
+        .attr("y", style.scatterPlot.labels.x.offset.y + style.scatterPlot.content.offset.y)
+        .attr("font-size", `${style.scatterPlot.labels.size}px`)
+        .attr("text-anchor", "middle")
+        .text(style.scatterPlot.labels.x.text);
+
+    // y label
+    scatterPlot.append("text")
+        .attr("x", style.scatterPlot.labels.y.offset.y - style.scatterPlot.content.offset.y)
+        .attr("y", style.scatterPlot.labels.y.offset.x + style.scatterPlot.content.offset.x)
+        .attr("font-size", `${style.scatterPlot.labels.size}px`)
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .text(style.scatterPlot.labels.y.text);
+    
+    // points
+    scatterPlot.append("g")
+        .selectAll("point")
+        .data(dataset)
+        .join("circle")
+        .attr("cx", entry => scatterPlotX(entry.age))
+        .attr("cy", entry => scatterPlotY(entry.hours_per_day))
+        .attr("r", style.scatterPlot.points.size.default)
+        .attr("transform", `translate(${style.scatterPlot.content.offset.x}, ${style.scatterPlot.content.offset.y})`)
+        .attr("fill", entry => convert.getServiceColor(entry.primary_streaming_service))
+        .on("mouseover", function(entry){  // make tooltip appear
+
+            console.log("entry", entry);
+
+            // tooltip stuff
+            tooltip
+                .style("display", "block")
+                .html(`
+                    <h3>Age: ${entry.age}</h3>
+                    <ul>
+                        <li><p>
+                            <strong>Service:</strong> ${entry.primary_streaming_service}
+                        </p></li>
+                        <li><p>
+                            <strong>Hours Listened per Day:</strong> ${entry.hours_per_day}
+                        </p></li>
+                        <li><p>
+                            <strong>Favorite Genre:</strong> ${entry.fav_genre}
+                        </p></li>
+                    </ul>
+                `)
+                .selectAll("ul")
+                    .style("padding-inline-start", "13px")
+                    .style("margin", `${style.scatterPlot.tooltip.ul.margin.all}px`)
+            ;
+            tooltip.select("h3")
+                .style("margin", `${style.scatterPlot.tooltip.h3.margin.all}px`)
+            ;
+            tooltip.selectAll("li").select("p")
+                .style("margin", `${style.scatterPlot.tooltip.p.margin.all}px`)
+            ;
+            tooltip.select("li:last-child").select("p")
+                .style("margin-bottom", `${style.scatterPlot.tooltip.p.margin.bottom}px`)
+            ;
+            
+            // point stuff
+            d3.selectAll("circle")
+                .transition()
+                .duration(style.transitionTime)
+                .attr("r", style.scatterPlot.points.size.unfocused)
+                .style("opacity", style.scatterPlot.points.opacity.unfocused)
+            ;
+
+            d3.select(this)
+                .transition()
+                .duration(style.transitionTime)
+                .attr("r", style.scatterPlot.points.size.focused)
+                .style("opacity", style.scatterPlot.points.opacity.focused)
+            ;
+        })
+        .on("mousemove", function(){  // update tooltip position
+            tooltip
+                .style('left', (d3.event.pageX + style.scatterPlot.tooltip.offset.x) + 'px')
+                .style('top', (d3.event.pageY + style.scatterPlot.tooltip.offset.y) + 'px');
+        })
+        .on('mouseout', function(){  // make tooltip disappear
+            tooltip
+                .style('display', 'none');
+            
+            d3.selectAll("circle")
+                .transition()
+                .duration(style.transitionTime)
+                .attr("r", style.scatterPlot.points.size.default)
+                .style("opacity", style.scatterPlot.points.opacity.default)
+        })
+    ;
+
+    // title
+    scatterPlot.append("text")
+        .attr("x", style.scatterPlot.title.offset.x + style.scatterPlot.content.offset.x)
+        .attr("y", style.scatterPlot.title.offset.y + style.scatterPlot.content.offset.y)
+        .attr("text-anchor", "middle")
+        .attr("font-size", style.scatterPlot.title.size)
+        .attr("font-weight", "bold")
+        .style("font-family", "sans-serif")
+        .text(style.scatterPlot.title.text);
+
+    // legend
+    const barGraphLegend = scatterPlot.append("g")
+        .attr("transform", `translate(
+            ${style.scatterPlot.legend.offset.x + style.scatterPlot.content.offset.x},
+            ${style.scatterPlot.legend.offset.y + style.scatterPlot.content.offset.y}
+        )`)
+    ;
+    services.forEach((entry, index) => {
+        const label = entry;
+
+        const barGraphLegendRow = barGraphLegend.append("g")
+            .attr("transform", `translate(0, ${index * (style.scatterPlot.legend.icon.size.y + style.scatterPlot.legend.icon.separation)})`);
+
+        barGraphLegendRow.append("rect")
+            .attr("width", style.scatterPlot.legend.icon.size.x)
+            .attr("height", style.scatterPlot.legend.icon.size.y)
+            .attr("fill", convert.getServiceColor(label));
+
+        barGraphLegendRow.append("text")
+            .attr("x", style.scatterPlot.legend.icon.size.x + style.scatterPlot.legend.text.offset.x)
+            .attr("y", style.scatterPlot.legend.text.offset.y)
+            .attr("font-size", `${style.scatterPlot.legend.text.size}px`)
+            .attr("text-anchor", style.scatterPlot.legend.text.anchor)
             .text(label);
     });
 }

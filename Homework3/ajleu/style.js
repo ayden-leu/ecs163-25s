@@ -58,6 +58,75 @@ barGraph.totalOffset = {
 };
 
 
+export let scatterPlot = {};
+scatterPlot.offset = {x: 10, y: 10};
+scatterPlot.width = width/2;
+scatterPlot.height = height/3;
+scatterPlot.labels = {
+    x: {
+        text: "Age",
+        offset: {x: 0 + scatterPlot.width/2, y: 40 + scatterPlot.height}
+    },
+    y: {
+        text: "Average Hours Per Day",
+        offset: {x: -30, y: -scatterPlot.height/2}
+    },
+    size: 20
+};
+scatterPlot.ticks = {
+    size: 10
+};
+scatterPlot.legend = {
+    icon: {
+        size: {x: 20, y: 20},
+        separation: 5
+    }
+};
+scatterPlot.legend.offset = {
+    x: scatterPlot.width - scatterPlot.legend.icon.size.x,
+    y: 0};
+scatterPlot.legend.text = {
+    offset: {x: -5 + -scatterPlot.legend.icon.size.x, y: 15},
+    size: 15,
+    anchor: "end"
+};
+scatterPlot.title = {
+    text: "Hours Listened on Service by Various Ages",
+    offset: {x: 0 + scatterPlot.width/2, y: -10},
+    size: "1.5em"
+};
+scatterPlot.tooltip = {
+    offset: {x: 1, y: -130},
+    h3: {
+        margin: {top: 0, right: 0, bottom: 0, left: 0, all: 0}
+    },
+    ul: {
+        margin: {top: 0, right: 0, bottom: 0, left: 0, all: 5}
+    },
+    p: {
+        margin: {top: 10, right: 0, bottom: 10, left: 0, all: 5}
+    }
+};
+scatterPlot.content = {};
+scatterPlot.content.offset = {x: 45, y: 30};  // needed to "fix" the random padding
+scatterPlot.totalOffset = { 
+    x: scatterPlot.content.offset.x + scatterPlot.offset.x,
+    y: scatterPlot.content.offset.y + scatterPlot.offset.y
+};
+scatterPlot.points = {
+    size: {
+        default: 5,
+        focused: 8,
+        unfocused: 2
+    },
+    opacity:{
+        default: 1,
+        focused: 1,
+        unfocused: 0.3
+    }
+};
+
+
 export let parallel = {};
 parallel.offset = {x: 5, y: 50 + barGraph.totalOffset.y + barGraph.height};
 parallel.width = Math.min(width, Math.max(

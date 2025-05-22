@@ -10,24 +10,26 @@ let parallelGenresClicked = 0;
 
 // requirements
 // implement two of the folllowing interaction techniques into your dashboard
-//      selection:  select one or multiple datapoints
+//      ✅ selection:  select one or multiple datapoints
 //      brushing:  selection of a subset of the displayed data in the visualization by either dragging the mouse over the data of interest or using a bounding shape to isolate this subset
 //      pan and zoom:  rescale plot to focus on a part of the visualization
 // incorporate one or more of the following transitions
 //      view:  change in viewpoint, offten modeled as the movement of a camera through virutal space (e.g  zoom and pan)
 //      substrate:  changes to spatial substrate in which marks are embedded (e.g  axis rescaling and log transforms as well as bifocal and graphical fisheye distortions)
-//      filtering:  changing which elements are visible
+//      ✅ filtering:  changing which elements are visible
 //      ordering:  change order in which data is displayed
 //      timestep:  apply temporal changes to data values
 //      visualization change:  change visual mappings of the data (e.g  data in bar chart -> pie chart, user edits color palettes)
 //      data schema change:  change the data dimensions being visualized (e.g  making mulltiple bars appear instead of one)
 
 // bar graph:
-//      change to scatterplot (x: age, y: hours per day), pan and zoom interaction
-// parallel:
-//      
+//      change to scatterplot (x: age, y: hours per day)
+//      interaction:  pan and zoom
+//      transition:  
 // donut:
 //      menu for choosing data type (data schema change transition)
+//      interaction:  selection (choosing data type)
+//      transition:  
 
 function processRawData(rawData){
     rawData.forEach(function(entry){
@@ -439,55 +441,6 @@ function createParallelPlot(dataset){
         .style("fill", "none")
         .style("stroke", entry => convert.getMusicGenreColor(entry.fav_genre))
         .style("opacity", style.parallel.line.opacity.default)
-        .style("cursor", "pointer")
-        .on("mouseover", function(entry){  // emphasize line below cursor
-            d3.selectAll(".line").select(function(){
-                const line = d3.select(this);
-                
-                if(!line.classed("clicked")){
-                    line.transition()
-                    .duration(style.transitionTime)
-                    .style("opacity", style.parallel.line.opacity.unfocused)
-                    .style("stroke-width", style.parallel.line.width.unfocused);
-                }
-            });
-            
-            d3.selectAll(".line." + convert.numToGenre(entry.fav_genre))
-                .transition()
-                .duration(style.transitionTime)
-                .style("opacity", style.parallel.line.opacity.focused)
-                .style("stroke-width", style.parallel.line.width.focused);
-        })
-        .on("mouseout", function(){  // make lines normal when cursor leaves
-            d3.selectAll(".line").select(function(){
-                const line = d3.select(this);
-                
-                if(!line.classed("clicked")){
-                    if(parallelGenresClicked !== 0){
-                        line.transition()
-                        .duration(style.transitionTime)
-                        .style("opacity", style.parallel.line.opacity.unfocused)
-                        .style("stroke-width", style.parallel.line.width.unfocused);
-                    }
-                    else{
-                        line.transition()
-                        .duration(style.transitionTime)
-                        .style("opacity", style.parallel.line.opacity.default)
-                        .style("stroke-width", style.parallel.line.width.default);
-                    }
-                }
-            });
-        })
-        .on("click", function(entry){
-            d3.selectAll(".line." + convert.numToGenre(entry.fav_genre)).select(function(){
-                const line = d3.select(this);
-                const isClicked = line.classed("clicked");
-                line.classed("clicked", !isClicked);
-
-                if(isClicked)  parallelGenresClicked--;
-                else parallelGenresClicked++;
-            });
-        })
     ;
 
     // draw axis
@@ -507,9 +460,8 @@ function createParallelPlot(dataset){
                 // legend combined with tick labels
                 axis.selectAll(".tick").each(function(genreID, index, ticks){
                     const tick = d3.select(ticks[index]);
-                    tick.select("text")
-                        .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
-                        .on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
+                    
+                    tick.on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
                             d3.selectAll(".line").select(function(){
                                 const line = d3.select(this);
                                 
@@ -553,12 +505,26 @@ function createParallelPlot(dataset){
                                 const isClicked = line.classed("clicked");
                                 line.classed("clicked", !isClicked);
 
-                                if(isClicked)  parallelGenresClicked--;
-                                else parallelGenresClicked++;
+                                if(isClicked){
+                                    parallelGenresClicked--;
+                                    d3.select(`.genre${tickName}_hole`).attr("opacity", 1);
+                                }
+                                else{
+                                    parallelGenresClicked++;
+                                    d3.select(`.genre${tickName}_hole`).attr("opacity", 0);
+                                }
+
                             });
                         })
                     ;
+                    
+                    // tick label
+                    tick.select("text")
+                        .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
+                        .style("cursor", "pointer")
+                    ;
 
+                    // legend icon
                     tick.append("rect")
                         .attr("transform", `translate(
                             -${style.parallel.legend.icon.size.x + style.parallel.legend.icon.offset.x},
@@ -568,54 +534,19 @@ function createParallelPlot(dataset){
                         .attr("height", style.parallel.legend.icon.size.y)
                         .attr("fill", convert.getMusicGenreColor(genreID))
                         .style("cursor", "pointer")
-                        .on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
-                            d3.selectAll(".line").select(function(){
-                                const line = d3.select(this);
-                                
-                                if(!line.classed("clicked")){
-                                    line.transition()
-                                    .duration(style.transitionTime)
-                                    .style("opacity", style.parallel.line.opacity.unfocused)
-                                    .style("stroke-width", style.parallel.line.width.unfocused);
-                                }
-                            });
-                            
-                            d3.selectAll(".line." + convert.numToGenre(tickName))
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.focused)
-                                .style("stroke-width", style.parallel.line.width.focused);
-                        })
-                        .on("mouseout", function(){  // make lines normal when cursor leaves
-                            d3.selectAll(".line").select(function(){
-                                const line = d3.select(this);
-                                
-                                if(!line.classed("clicked")){
-                                    if(parallelGenresClicked !== 0){
-                                        line.transition()
-                                        .duration(style.transitionTime)
-                                        .style("opacity", style.parallel.line.opacity.unfocused)
-                                        .style("stroke-width", style.parallel.line.width.unfocused);
-                                    }
-                                    else{
-                                        line.transition()
-                                        .duration(style.transitionTime)
-                                        .style("opacity", style.parallel.line.opacity.default)
-                                        .style("stroke-width", style.parallel.line.width.default);
-                                    }
-                                }
-                            });
-                        })
-                        .on("click", function(tickName){
-                            d3.selectAll(".line." + convert.numToGenre(tickName)).select(function(){
-                                const line = d3.select(this);
-                                const isClicked = line.classed("clicked");
-                                line.classed("clicked", !isClicked);
+                    ;
 
-                                if(isClicked)  parallelGenresClicked--;
-                                else parallelGenresClicked++;
-                            });
-                        })
+                    // legend icon hole
+                    tick.append("rect")
+                        .attr("transform", `translate(
+                            -${style.parallel.legend.icon.size.x*3/4 + style.parallel.legend.icon.offset.x},
+                            -${style.parallel.legend.icon.size.y/4 + style.parallel.legend.icon.offset.y}
+                        )`)
+                        .attr("width", style.parallel.legend.icon.size.x/2)
+                        .attr("height", style.parallel.legend.icon.size.y/2)
+                        .attr("fill", "white")
+                        .attr("pointer-events", "none")
+                        .attr("class", `genre${genreID}_hole`)
                     ;
                 });
             }

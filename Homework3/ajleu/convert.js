@@ -4,7 +4,7 @@ export function getServiceColor(platform){
         "Pandora": "deepskyblue",
         "YouTube Music": "salmon",
         "Apple Music": "gainsboro",
-        "Other": "gray"
+        "Other": "black"
     };
     return serviceColor[platform] || "lightslategray";
 }

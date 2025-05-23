@@ -68,7 +68,7 @@ scatterPlot.labels = {
         offset: {x: 0 + scatterPlot.width/2, y: 40 + scatterPlot.height}
     },
     y: {
-        text: "Average Hours Per Day",
+        text: "Hours Per Day",
         offset: {x: -30, y: -scatterPlot.height/2}
     },
     size: 20
@@ -150,9 +150,9 @@ parallel.line = {
         unfocused: 0
     },
     opacity: {
-        default: 0.5,
+        default: 0.8,
         focused: 1,
-        unfocused: 0
+        unfocused: 0.2
     }
 };
 parallel.legend = {
@@ -174,6 +174,16 @@ parallel.title = {
 };
 parallel.content = {};
 parallel.content.offset = {x: -44, y: 72}; // needed to "fix" the random padding
+parallel.brush = {
+    width: 60,
+    color: "gray",
+    opacity: 0,
+    stroke: {
+        width: 2,
+        color: "black"
+    }
+}
+
 
 
 export let donut = {};
@@ -208,7 +218,7 @@ donut.width = width/2;
 donut.height = donut.width;
 donut.offset = {
     x: 80 + barGraph.width + -donut.legend.offset.x,
-    y: 0 + 5-donut.legend.offset.y
+    y: 10 + 5-donut.legend.offset.y
 };
 donut.tooltip = {
     offset: {x: 1, y: -55},

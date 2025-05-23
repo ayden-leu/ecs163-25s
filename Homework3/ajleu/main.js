@@ -6,12 +6,10 @@ const datasetBpmMax = 300;
 const datasetHoursMax = 24;
 const debugStyle = "" //"outline: 1px solid black"
 
-let parallelGenresClicked = 0;
-
 // requirements
 // implement two of the folllowing interaction techniques into your dashboard
 //      ✅ selection:  select one or multiple datapoints
-//      brushing:  selection of a subset of the displayed data in the visualization by either dragging the mouse over the data of interest or using a bounding shape to isolate this subset
+//      ✅ brushing:  selection of a subset of the displayed data in the visualization by either dragging the mouse over the data of interest or using a bounding shape to isolate this subset
 //      pan and zoom:  rescale plot to focus on a part of the visualization
 // incorporate one or more of the following transitions
 //      view:  change in viewpoint, offten modeled as the movement of a camera through virutal space (e.g  zoom and pan)
@@ -125,8 +123,8 @@ d3.csv(dataset).then(rawData =>{
     console.log("processedData", processedData);
 
     // then create graphs
-    // createBarGraph(processedData);
-    createScatterPlot(processedData);
+    createBarGraph(processedData);
+    // createScatterPlot(processedData);
     createParallelPlot(processedData);
     createDonutChart(processedData);
 
@@ -213,6 +211,7 @@ function createBarGraph(dataset){
         .attr("height", style.barGraph.height)
         .attr("transform", `translate(${style.barGraph.offset.x}, ${style.barGraph.offset.y})`)
         .attr("style", debugStyle) 
+        .classed("barGraph", true)
     ;
 
     // bar stack
@@ -383,6 +382,7 @@ function createScatterPlot(dataset){
         .attr("height", style.scatterPlot.height)
         .attr("transform", `translate(${style.scatterPlot.offset.x}, ${style.scatterPlot.offset.y})`)
         .attr("style", debugStyle) 
+        .classed("scatterPlot", true)
     ;
 
     // x range
@@ -443,10 +443,7 @@ function createScatterPlot(dataset){
         .attr("r", style.scatterPlot.points.size.default)
         .attr("transform", `translate(${style.scatterPlot.content.offset.x}, ${style.scatterPlot.content.offset.y})`)
         .attr("fill", entry => convert.getServiceColor(entry.primary_streaming_service))
-        .on("mouseover", function(entry){  // make tooltip appear
-
-            console.log("entry", entry);
-
+        .on("mouseover", function(entry){
             // tooltip stuff
             tooltip
                 .style("display", "block")
@@ -552,6 +549,7 @@ function createScatterPlot(dataset){
 //      service
 //      frequency_genre 
 // interaction:  selection (click category to keep it highlighted)
+//             & brushing (brush over the numerical axes to filter)
 // transition:  filtering (only shows clicked categories if any are clicked)
 ///////////////////////////////////////////////////////////////////////////
 function createParallelPlot(dataset){
@@ -621,10 +619,65 @@ function createParallelPlot(dataset){
         .style("fill", "none")
         .style("stroke", entry => convert.getMusicGenreColor(entry.fav_genre))
         .style("opacity", style.parallel.line.opacity.default)
+        .style("stroke-width", `${style.parallel.line.width.default}px`)
+        .classed("clicked", true)
     ;
 
+    let parallelAxesWithSelection = {};  // boolean set
+    let parallelSelectionsMade = 0;
+    function isLineSelected(line){
+        // get the axes this line is selected in
+        const axesLineSelectedIn = {};
+        parallelCategories.forEach(category => {
+            axesLineSelectedIn[category] = line.classed(`selected-${category}`);
+        });
+
+        // determine if line is selected in all axes with a selection
+        let lineIsSelected = true;
+        d3.keys(parallelAxesWithSelection).forEach(category => {
+            if(parallelAxesWithSelection[category] && !axesLineSelectedIn[category]){
+                lineIsSelected = false;
+            }
+        });
+
+        return lineIsSelected;
+    }
+
+    let userIsHovering = false;
+    function updateLines(){
+        d3.selectAll(".line").select(function(){
+            const line = d3.select(this);
+            const lineIsClicked = line.classed("clicked");
+            const lineIsSelected = isLineSelected(line);
+            const lineIsHovered = line.classed("isHovered");
+
+            // update style
+            if(lineIsClicked && lineIsSelected && !lineIsHovered && userIsHovering){
+                line.transition().duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.unfocused)
+                    .style("stroke-width", `${style.parallel.line.width.unfocused}px`);
+            }
+            else if(lineIsHovered){  // hovered
+                line.transition().duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.focused)
+                    .style("stroke-width", `${style.parallel.line.width.focused}px`);
+            }
+            else if(lineIsClicked && lineIsSelected){
+                line.transition().duration(style.transitionTime)
+                    .style("opacity", style.parallel.line.opacity.default)
+                    .style("stroke-width", `${style.parallel.line.width.default}px`);
+            }
+            
+            else{
+                line.transition().duration(style.transitionTime)
+                    .style("opacity", 0)
+                    .style("stroke-width", `${0}px`);
+            }
+        });
+    }
+
     // draw axis
-    parallel.selectAll("parallelAxis")
+    const axes = parallel.selectAll("parallelAxis")
         .data(parallelCategories)
         .enter().append("g")
         .attr("transform", entry => `translate(${parallelX(entry) + style.parallel.content.offset.x}, ${style.parallel.content.offset.y})`)
@@ -632,103 +685,7 @@ function createParallelPlot(dataset){
             const axis = d3.select(this);
             
             if(index === 0){  // the first tick set is for the genres, so it displays text instead of numbers
-                axis.call(d3.axisLeft(parallelY[entry])
-                    .ticks(genres.length)
-                    .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
-                );
-
-                // legend combined with tick labels
-                axis.selectAll(".tick").each(function(genreID, index, ticks){
-                    const tick = d3.select(ticks[index]);
-                    
-                    tick.on("mouseover", function(tickName){  // emphasize lines of the same color as the square below cursor
-                            d3.selectAll(".line").select(function(){
-                                const line = d3.select(this);
-                                
-                                if(!line.classed("clicked")){
-                                    line.transition()
-                                    .duration(style.transitionTime)
-                                    .style("opacity", style.parallel.line.opacity.unfocused)
-                                    .style("stroke-width", style.parallel.line.width.unfocused);
-                                }
-                            });
-                            
-                            d3.selectAll(".line." + convert.numToGenre(tickName))
-                                .transition()
-                                .duration(style.transitionTime)
-                                .style("opacity", style.parallel.line.opacity.focused)
-                                .style("stroke-width", style.parallel.line.width.focused);
-                        })
-                        .on("mouseout", function(){  // make lines normal when cursor leaves
-                            d3.selectAll(".line").select(function(){
-                                const line = d3.select(this);
-                                
-                                if(!line.classed("clicked")){
-                                    if(parallelGenresClicked !== 0){
-                                        line.transition()
-                                        .duration(style.transitionTime)
-                                        .style("opacity", style.parallel.line.opacity.unfocused)
-                                        .style("stroke-width", style.parallel.line.width.unfocused);
-                                    }
-                                    else{
-                                        line.transition()
-                                        .duration(style.transitionTime)
-                                        .style("opacity", style.parallel.line.opacity.default)
-                                        .style("stroke-width", style.parallel.line.width.default);
-                                    }
-                                }
-                            });
-                        })
-                        .on("click", function(tickName){
-                            d3.selectAll(".line." + convert.numToGenre(tickName)).select(function(){
-                                const line = d3.select(this);
-                                const isClicked = line.classed("clicked");
-                                line.classed("clicked", !isClicked);
-
-                                if(isClicked){
-                                    parallelGenresClicked--;
-                                    d3.select(`.genre${tickName}_hole`).attr("opacity", 1);
-                                }
-                                else{
-                                    parallelGenresClicked++;
-                                    d3.select(`.genre${tickName}_hole`).attr("opacity", 0);
-                                }
-
-                            });
-                        })
-                    ;
-                    
-                    // tick label
-                    tick.select("text")
-                        .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
-                        .style("cursor", "pointer")
-                    ;
-
-                    // legend icon
-                    tick.append("rect")
-                        .attr("transform", `translate(
-                            -${style.parallel.legend.icon.size.x + style.parallel.legend.icon.offset.x},
-                            -${style.parallel.legend.icon.size.y/2}
-                        )`)
-                        .attr("width", style.parallel.legend.icon.size.x)
-                        .attr("height", style.parallel.legend.icon.size.y)
-                        .attr("fill", convert.getMusicGenreColor(genreID))
-                        .style("cursor", "pointer")
-                    ;
-
-                    // legend icon hole
-                    tick.append("rect")
-                        .attr("transform", `translate(
-                            -${style.parallel.legend.icon.size.x*3/4 + style.parallel.legend.icon.offset.x},
-                            -${style.parallel.legend.icon.size.y/4 + style.parallel.legend.icon.offset.y}
-                        )`)
-                        .attr("width", style.parallel.legend.icon.size.x/2)
-                        .attr("height", style.parallel.legend.icon.size.y/2)
-                        .attr("fill", "white")
-                        .attr("pointer-events", "none")
-                        .attr("class", `genre${genreID}_hole`)
-                    ;
-                });
+                setFirstAxis(axis, entry);
             }
             else{  // the rest are numbers so no other logic needed
                 axis.call(d3.axisLeft(parallelY[entry])
@@ -739,15 +696,149 @@ function createParallelPlot(dataset){
             axis.attr("font-size", `${style.parallel.labels.y.size}px`);
         })
         .append("text")  // the names of the categories for each vertical axis thing
-            .style("text-anchor", "middle")
-            .attr("x", 5)
-            .attr("y", 5)
+            .attr("x", style.parallel.labels.x.offset.x)
+            .attr("y", style.parallel.labels.x.offset.y)
             .text(entry => entry.replaceAll("_", " "))
+            .style("text-anchor", "middle")
             .style("fill", "black")
             .style("font-size", `${style.parallel.labels.x.size}px`)
-            .attr("x", style.parallel.labels.x.offset.x)
-            .attr("y", style.parallel.labels.x.offset.y);
+        ;
+    
+    function setFirstAxis(axis, entry){
+        axis.call(d3.axisLeft(parallelY[entry])
+            .ticks(genres.length)
+            .tickFormat(tick => genres[tick-1].replaceAll("_", " "))  // tick is a number and genre IDs start at 1
+        );
 
+        // legend combined with tick labels
+        axis.selectAll(".tick").each(function(genreID, index, ticks){
+            const tick = d3.select(ticks[index]);
+            tick.on("mouseover", function(tickName){
+                    // make all lines of this genre focused if they are selected, if there is a selection
+                    const targetObjects = 
+                        ".line" +
+                        "." + convert.numToGenre(tickName) +
+                        (parallelSelectionsMade>0? ".selected" : "")
+                    ;
+                    d3.selectAll(targetObjects).each(function(){
+                        const line = d3.select(this);
+
+                        if(isLineSelected(line)){
+                            line.classed("isHovered", true);
+                            userIsHovering = true;
+                        }
+                    });
+                    
+                    updateLines();
+                })
+                .on("mouseout", function(){  // make lines normal when cursor leaves
+                    d3.selectAll(".isHovered").classed("isHovered", false);
+                    userIsHovering = false;
+                    
+                    updateLines();
+                })
+                .on("click", function(tickName){  // apply click class
+                    d3.selectAll(".line." + convert.numToGenre(tickName)).select(function(){
+                        const line = d3.select(this);
+                        const isClicked = line.classed("clicked");
+                        line.classed("clicked", !isClicked);
+
+                        d3.select(`.genre${tickName}-hole`)
+                            .attr("opacity", isClicked? 1 : 0);
+                    });
+
+                    updateLines();
+                })
+            ;
+            
+            // tick label
+            tick.select("text")
+                .attr("transform", `translate(-${style.parallel.legend.icon.size.x}, 0)`)
+                .style("cursor", "pointer")
+            ;
+
+            // legend icon
+            tick.append("rect")
+                .attr("transform", `translate(
+                    -${style.parallel.legend.icon.size.x + style.parallel.legend.icon.offset.x},
+                    -${style.parallel.legend.icon.size.y/2}
+                )`)
+                .attr("width", style.parallel.legend.icon.size.x)
+                .attr("height", style.parallel.legend.icon.size.y)
+                .attr("fill", convert.getMusicGenreColor(genreID))
+                .style("cursor", "pointer")
+            ;
+
+            // legend icon hole
+            tick.append("rect")
+                .attr("transform", `translate(
+                    -${style.parallel.legend.icon.size.x*3/4 + style.parallel.legend.icon.offset.x},
+                    -${style.parallel.legend.icon.size.y/4 + style.parallel.legend.icon.offset.y}
+                )`)
+                .attr("width", style.parallel.legend.icon.size.x/2)
+                .attr("height", style.parallel.legend.icon.size.y/2)
+                .attr("fill", "white")
+                .attr("pointer-events", "none")
+                .attr("class", `genre${genreID}-hole`)
+                .attr("opacity", 0)
+            ;
+        });
+    }
+
+    // brush selection for each axis
+    axes.each(function(axisLabel, index) {
+        if(index == 0)  return;  // skip first axis
+        
+        const brush = d3.brushY()
+            .extent([
+                [-style.parallel.brush.width/2, -10],
+                [style.parallel.brush.width/2, style.parallel.height+10]
+            ])
+            .on("end", function() {
+                const selection = d3.event.selection;
+
+                if(selection){
+                    const axisSelectedRangeStart = selection[0];
+                    const axisSelectedRangeEnd = selection[1];
+                    
+                    parallel.selectAll(".clicked")
+                        .classed(`selected-${axisLabel}`, function(axisValues){
+                            const line = d3.select(this);
+                            const value = parallelY[axisLabel](axisValues[axisLabel]);
+                            const selectedInThisAxis = (
+                                value >= axisSelectedRangeStart &&
+                                value <= axisSelectedRangeEnd
+                            );
+                            line.classed("selected", selectedInThisAxis);
+
+                            return selectedInThisAxis;
+                        });
+                }
+
+                parallelAxesWithSelection[axisLabel] = (selection !== null);
+                
+                parallelSelectionsMade = 0;
+                d3.values(parallelAxesWithSelection).forEach(function(hasSelection){
+                    if(hasSelection)  parallelSelectionsMade++;
+                });
+
+                updateLines();
+            });
+        
+        // "this" is the label, so its parent is the axis element
+        d3.select(this.parentNode)
+            .append("g")
+            .call(brush)
+        ;
+        // style brush
+        d3.selectAll(".selection")
+            .style("fill", style.parallel.brush.color)
+            .style("fill-opacity", style.parallel.brush.opacity)
+            .style("stroke", style.parallel.brush.stroke.color)
+            .style("stroke-width", style.parallel.brush.stroke.width)
+        ;
+    });
+    
     // title
     parallel.append("text")
         .attr("x", style.parallel.title.offset.x + style.parallel.content.offset.x)

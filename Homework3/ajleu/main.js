@@ -20,10 +20,6 @@ const debugStyle = "" //"outline: 1px solid black"
 //      ✅ visualization change:  change visual mappings of the data (e.g  data in bar chart -> pie chart, user edits color palettes)
 //      data schema change:  change the data dimensions being visualized (e.g  making mulltiple bars appear instead of one)
 
-// bar graph:
-//      change to scatterplot (x: age, y: hours per day)
-//      interaction:  brushing
-//      transition:  
 // donut:
 //      menu for choosing data type (data schema change transition)
 //      interaction:  selection (choosing data type)

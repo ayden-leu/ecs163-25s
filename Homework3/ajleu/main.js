@@ -17,7 +17,7 @@ const debugStyle = "" //"outline: 1px solid black"
 //      ✅ filtering:  changing which elements are visible
 //      ordering:  change order in which data is displayed
 //      timestep:  apply temporal changes to data values
-//      visualization change:  change visual mappings of the data (e.g  data in bar chart -> pie chart, user edits color palettes)
+//      ✅ visualization change:  change visual mappings of the data (e.g  data in bar chart -> pie chart, user edits color palettes)
 //      data schema change:  change the data dimensions being visualized (e.g  making mulltiple bars appear instead of one)
 
 // bar graph:
@@ -136,6 +136,7 @@ d3.csv(dataset).then(rawData =>{
 // stacked bar chart
 //      x:  service
 //      y:  age
+// transition:  visualization change (button switch graph type)
 ///////////////////////////////////////////////////////////////////////////
 function createBarGraph(dataset){
     // get total hours listened to music for each age
@@ -330,7 +331,7 @@ function createBarGraph(dataset){
     ;
 
     // title
-    barGraph.append("text")
+    const title = barGraph.append("text")
         .attr("x", style.barGraph.title.offset.x + style.barGraph.content.offset.x)
         .attr("y", style.barGraph.title.offset.y + style.barGraph.content.offset.y)
         .attr("text-anchor", "middle")
@@ -364,12 +365,37 @@ function createBarGraph(dataset){
             .attr("text-anchor", style.barGraph.legend.text.anchor)
             .text(label);
     });
+
+    // button to change graph
+    const button = barGraph.append("rect")
+        .attr("x", style.barGraph.button.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.button.offset.y + style.barGraph.content.offset.y)
+        .attr("width", style.barGraph.button.width)
+        .attr("height", style.barGraph.button.height)
+        .attr("fill", style.barGraph.button.color)
+        .on("click", () => {
+            createScatterPlot(dataset);
+            barGraph.remove();
+        })
+    ;
+    barGraph.append("text")
+        .attr("x", style.barGraph.button.label.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.button.label.offset.y + style.barGraph.content.offset.y)
+        .text(style.barGraph.button.label.text)
+        .style("fill", style.barGraph.button.label.color)
+        .attr("text-anchor", "start")
+        .attr("font-size", style.barGraph.button.label.size)
+        .attr("font-weight", "bold")
+        .style("font-family", "sans-serif")
+        .attr("pointer-events", "none")
+    ;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 // scatter plot
 //      x:  age
 //      y:  hours per day
+// transition:  visualization change (button switch graph type)
 ///////////////////////////////////////////////////////////////////////////
 function createScatterPlot(dataset){
     // get unique services
@@ -518,7 +544,7 @@ function createScatterPlot(dataset){
         .text(style.scatterPlot.title.text);
 
     // legend
-    const barGraphLegend = scatterPlot.append("g")
+    const scatterPlotLegend = scatterPlot.append("g")
         .attr("transform", `translate(
             ${style.scatterPlot.legend.offset.x + style.scatterPlot.content.offset.x},
             ${style.scatterPlot.legend.offset.y + style.scatterPlot.content.offset.y}
@@ -527,25 +553,49 @@ function createScatterPlot(dataset){
     services.forEach((entry, index) => {
         const label = entry;
 
-        const barGraphLegendRow = barGraphLegend.append("g")
+        const scatterPlotLegendRow = scatterPlotLegend.append("g")
             .attr("transform", `translate(0, ${index * (style.scatterPlot.legend.icon.size.y + style.scatterPlot.legend.icon.separation)})`);
 
-        barGraphLegendRow.append("rect")
+        scatterPlotLegendRow.append("rect")
             .attr("width", style.scatterPlot.legend.icon.size.x)
             .attr("height", style.scatterPlot.legend.icon.size.y)
             .attr("fill", convert.getServiceColor(label));
 
-        barGraphLegendRow.append("text")
+        scatterPlotLegendRow.append("text")
             .attr("x", style.scatterPlot.legend.icon.size.x + style.scatterPlot.legend.text.offset.x)
             .attr("y", style.scatterPlot.legend.text.offset.y)
             .attr("font-size", `${style.scatterPlot.legend.text.size}px`)
             .attr("text-anchor", style.scatterPlot.legend.text.anchor)
             .text(label);
     });
+
+    // button to change graph
+    const button = scatterPlot.append("rect")
+        .attr("x", style.barGraph.button.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.button.offset.y + style.barGraph.content.offset.y)
+        .attr("width", style.barGraph.button.width)
+        .attr("height", style.barGraph.button.height)
+        .attr("fill", style.barGraph.button.color)
+        .on("click", () => {
+            createBarGraph(dataset);
+            scatterPlot.remove();
+        })
+    ;
+    scatterPlot.append("text")
+        .attr("x", style.barGraph.button.label.offset.x + style.barGraph.content.offset.x)
+        .attr("y", style.barGraph.button.label.offset.y + style.barGraph.content.offset.y)
+        .text(style.barGraph.button.label.text)
+        .style("fill", style.barGraph.button.label.color)
+        .attr("text-anchor", "start")
+        .attr("font-size", style.barGraph.button.label.size)
+        .attr("font-weight", "bold")
+        .style("font-family", "sans-serif")
+        .attr("pointer-events", "none")
+    ;
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// parallel coordinatees plot
+// parallel coordinates plot
 //      service
 //      frequency_genre 
 // interaction:  selection (click category to keep it highlighted)

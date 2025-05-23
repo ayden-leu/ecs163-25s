@@ -56,6 +56,24 @@ barGraph.totalOffset = {
     x: barGraph.content.offset.x + barGraph.offset.x,
     y: barGraph.content.offset.y + barGraph.offset.y
 };
+barGraph.button = {
+    width: 115,
+    height: 23,
+    color: "black"
+};
+barGraph.button.offset = {
+    x: barGraph.legend.offset.x,
+    y: barGraph.title.offset.y - barGraph.button.height
+};
+barGraph.button.label = {
+    text: "Switch Graph",
+    size: barGraph.title.size - 10,
+    color: "white",
+    offset: {
+        x: barGraph.legend.offset.x + 5,
+        y: barGraph.title.offset.y - 5
+    }
+}
 
 
 export let scatterPlot = {};

@@ -34,7 +34,7 @@ barGraph.legend.text = {
     anchor: "start"
 };
 barGraph.title = {
-    text: "Hours Listened on Service by Various Ages",
+    text: width>960? "Hours Listened on Service by Various Ages" : "",
     offset: {x: 0 + barGraph.width/2, y: -10},
     size: "1.5em"
 };
@@ -109,7 +109,7 @@ scatterPlot.legend.text = {
     anchor: "end"
 };
 scatterPlot.title = {
-    text: "Hours Listened on Service by Various Ages",
+    text: width>960? "Hours Listened on Service by Various Ages" : "",
     offset: {x: 0 + scatterPlot.width/2, y: -10},
     size: "1.5em"
 };
